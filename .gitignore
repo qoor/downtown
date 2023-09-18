@@ -1,5 +1,8 @@
 /target
 
+# dotenv
+.env
+
 # Misc
 nohup.out
 
