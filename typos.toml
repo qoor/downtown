@@ -1,0 +1,3 @@
+[default.extend-words]
+# This is a generic parameter name
+TRE = "TRE"

@@ -1,0 +1,19 @@
+# IDE/editor config
+.dir-locals.el
+.vscode/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Misc
+.rustfmt.toml
+typos.toml
+.gitignore
+target/
+
+# GitHub Actions
+.github/
+
+# Documentation
+*.md
