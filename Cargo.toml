@@ -1,0 +1,35 @@
+[package]
+name = "downtown"
+version = "0.1.0"
+edition = "2021"
+authors = ["Qoo <akck0918@gmail.com>"]
+repository = "https://github.com/respec-team/downtown"
+# We do not want to publish this
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = { version = "0.6.20", features = ["headers"] }
+axum-extra = { version = "0.8.0", features = ["cookie"] }
+axum_typed_multipart = "0.9.0"
+chrono = { version = "0.4.31", features = ["serde"] }
+dotenvy = "0.15.7"
+hyper = { version = "0.14.27", features = ["full"] }
+jsonwebtoken = { version = "8.3.0", features = ["use_pem"] }
+oauth2 = "4.4.2"
+reqwest = { version = "0.11.20", features = ["native-tls", "json"] }
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.107"
+sqlx = { version = "0.7.1", features = ["runtime-tokio-native-tls", "mysql", "chrono"] }
+tempfile = "3.8.0"
+thiserror = "1.0.48"
+tokio = { version = "1.32.0", features = ["full"] }
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+
+[dev-dependencies]
+tower = { version = "0.4.13", features = ["util"] }
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3
