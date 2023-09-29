@@ -49,7 +49,7 @@ jobs:
       - name: Setup database
         run: |
           cargo install --locked sqlx-cli --features mysql || true
-          ln -s .env.ci .env
+          ln -s $(pwd)/.env.ci $(pwd)/.env
           sqlx db setup
 
       - name: Run cargo check
