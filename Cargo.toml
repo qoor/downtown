@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Qoo <akck0918@gmail.com>"]
 repository = "https://github.com/respec-team/downtown"
-homepage = "http://13.124.99.114"
+homepage = "https://mrdalio.com"
 # We do not want to publish this
 publish = false
 
