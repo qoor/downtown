@@ -57,7 +57,7 @@ ENV CC_x86_64_unknown_linux_gnu="/usr/bin/x86_64-linux-gnu-gcc" \
     AARCH64_UNKNOWN_LINUX_GNU_OPENSSL_LIB_DIR="/usr/lib/aarch64-linux-gnu" \
     SQLX_OFFLINE=true
 
-WORKDIR /usr/src/resback
+WORKDIR /usr/src/app
 
 # Creates a dummy project used to grab dependencies
 RUN USER=root cargo init --bin
@@ -79,26 +79,26 @@ RUN cargo build --locked --release --target=aarch64-unknown-linux-gnu
 # Runtime for amd64
 #
 FROM --platform=linux/amd64 debian:bullseye-slim as runtime-amd64
-WORKDIR /resback/
+WORKDIR /app/
 
 # Copy files needed for runtime
-COPY --from=builder /usr/src/resback/target/x86_64-unknown-linux-gnu/release/resback ./
-COPY --from=builder /usr/src/resback/.env.prod ./.env
-COPY --from=builder /usr/src/resback/private_key.pem ./private_key.pem
-COPY --from=builder /usr/src/resback/public_key.pem ./public_key.pem
+COPY --from=builder /usr/src/app/target/x86_64-unknown-linux-gnu/release/downtown ./
+COPY --from=builder /usr/src/app/.env.prod ./.env
+COPY --from=builder /usr/src/app/private_key.pem ./private_key.pem
+COPY --from=builder /usr/src/app/public_key.pem ./public_key.pem
 
 
 #
 # Runtime for arm64
 #
 FROM --platform=linux/arm64 debian:bullseye-slim as runtime-arm64
-WORKDIR /resback/
+WORKDIR /app/
 
 # Copy files needed for runtime
-COPY --from=builder /usr/src/resback/target/aarch64-unknown-linux-gnu/release/resback ./
-COPY --from=builder /usr/src/resback/.env.prod ./.env
-COPY --from=builder /usr/src/resback/private_key.pem ./private_key.pem
-COPY --from=builder /usr/src/resback/public_key.pem ./public_key.pem
+COPY --from=builder /usr/src/app/target/aarch64-unknown-linux-gnu/release/downtown ./
+COPY --from=builder /usr/src/app/.env.prod ./.env
+COPY --from=builder /usr/src/app/private_key.pem ./private_key.pem
+COPY --from=builder /usr/src/app/public_key.pem ./public_key.pem
 
 
 #
@@ -120,15 +120,12 @@ RUN apt-get update \
 ENV PORT=3000 \
     MYSQL_HOST=localhost \
     MYSQL_PORT=3306 \
-    MYSQL_USERNAME=resback \
+    MYSQL_USERNAME=downtown \
     MYSQL_PASSWORD= \
-    MYSQL_DATABASE=resback \
+    MYSQL_DATABASE=downtown \
     RSA_PRIVATE_PEM_FILE_PATH=private_key.pem \
     RSA_PUBLIC_PEM_FILE_PATH=public_key.pem \
     ACCESS_TOKEN_MAX_AGE=1800 \
-    REFRESH_TOKEN_MAX_AGE=31536000 \
-    GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/authorized \
-    KAKAO_REDIRECT_URI=http://localhost:3000/auth/kakao/authorized \
-    NAVER_REDIRECT_URI=http://localhost:3000/auth/naver/authorized
+    REFRESH_TOKEN_MAX_AGE=31536000
 
-CMD [ "./resback" ]
+CMD [ "./downtown" ]
