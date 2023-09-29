@@ -2,7 +2,7 @@
 
 use axum::Server;
 use dotenvy::dotenv;
-use downtown::{env::get_env_or_panic, config::Config};
+use downtown::{config::Config, env::get_env_or_panic};
 use sqlx::mysql::MySqlPoolOptions;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 

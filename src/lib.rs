@@ -5,14 +5,19 @@ pub mod env;
 pub mod error;
 
 mod handler;
+mod schema;
+mod town;
+mod user;
 
 use std::sync::Arc;
 
-use axum::routing::get;
+pub use error::{Error, Result};
+
+use axum::routing::{get, post, put};
 use config::Config;
 use sqlx::MySql;
 
-pub(crate) struct AppState {
+pub struct AppState {
     config: Config,
     database: sqlx::Pool<MySql>,
 }
@@ -21,8 +26,12 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
     let state = Arc::new(AppState { config, database: database.clone() });
 
     let root_routers = axum::Router::new().route("/", get(handler::root));
+    let user_routers = axum::Router::new()
+        .route("/user", post(handler::user::create_user))
+        .route("/user/verification/phone", post(handler::user::setup_phone_verification))
+        .route("/user/verification/phone", put(handler::user::verify_phone));
 
-    axum::Router::new().merge(root_routers).with_state(state)
+    axum::Router::new().merge(root_routers).merge(user_routers).with_state(state)
 }
 
 pub fn about() -> String {
