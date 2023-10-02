@@ -4,6 +4,7 @@ pub mod config;
 pub mod env;
 pub mod error;
 
+mod aws;
 mod handler;
 mod schema;
 mod town;
@@ -23,10 +24,15 @@ use sqlx::MySql;
 pub struct AppState {
     config: Config,
     database: sqlx::Pool<MySql>,
+    s3: aws::S3Client,
 }
 
 pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
-    let state = Arc::new(AppState { config, database: database.clone() });
+    let state = Arc::new(AppState {
+        config,
+        database: database.clone(),
+        s3: aws::S3Client::from_env().await,
+    });
 
     let auth_layer =
         middleware::from_fn_with_state(state.clone(), user::jwt::authorize_user_middleware);
@@ -35,6 +41,10 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
     let user_routers = axum::Router::new()
         .route("/user", post(handler::user::create_user))
         .route("/user/me", get(handler::user::get_user_info).route_layer(auth_layer.clone()))
+        .route(
+            "/user/me/picture",
+            patch(handler::user::update_profile_picture).route_layer(auth_layer.clone()),
+        )
         .route(
             "/user/me/bio",
             patch(handler::user::update_profile_bio).route_layer(auth_layer.clone()),

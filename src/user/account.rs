@@ -1,9 +1,15 @@
 // Copyright 2023. The downtown authors all rights reserved.
 
+use std::path::PathBuf;
+
+use axum_typed_multipart::FieldData;
 use chrono::{DateTime, NaiveDate, Utc};
 use sqlx::MySql;
+use tempfile::NamedTempFile;
+use tokio::{fs, io};
 
 use crate::{
+    aws,
     schema::{RegistrationSchema, UserSchema},
     town::{Town, TownId},
     Error, Result,
@@ -23,7 +29,7 @@ pub(crate) struct User {
     town_id: TownId,
     verification_type: IdVerificationType,
     verification_photo_url: String,
-    photo: String,
+    picture: String,
     bio: Option<String>,
     refresh_token: Option<String>,
     created_at: DateTime<Utc>,
@@ -87,7 +93,7 @@ sex as `sex: Sex`,
 town_id,
 verification_type as `verification_type: IdVerificationType`,
 verification_photo_url,
-photo,
+picture,
 bio,
 refresh_token,
 created_at,
@@ -111,7 +117,7 @@ sex as `sex: Sex`,
 town_id,
 verification_type as `verification_type: IdVerificationType`,
 verification_photo_url,
-photo,
+picture,
 bio,
 refresh_token,
 created_at,
@@ -139,7 +145,7 @@ FROM user WHERE phone = ?",
             town,
             verification_type: self.verification_type.to_string(),
             verification_photo_url: self.verification_photo_url.to_string(),
-            photo: self.photo.clone(),
+            picture: self.picture.clone(),
             bio: self.bio.clone().unwrap_or(String::new()),
         })
     }
@@ -165,7 +171,52 @@ FROM user WHERE phone = ?",
             })?)
     }
 
+    pub(crate) async fn update_picture(
+        &mut self,
+        picture: FieldData<NamedTempFile>,
+        s3: &aws::S3Client,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<String> {
+        let picture_path = PicturePath::generate(self.id).await?;
+
+        picture.contents.persist(&picture_path.file_path).map_err(|err| Error::PersistFile {
+            path: picture_path.file_path.to_path_buf(),
+            source: err.into(),
+        })?;
+
+        let picture_url = s3.push_file(&picture_path.file_path, &picture_path.upload_path).await?;
+
+        sqlx::query!("UPDATE user SET picture = ? WHERE id = ?", picture_url, self.id)
+            .execute(db)
+            .await?;
+
+        Ok(picture_url)
+    }
+
     pub(crate) fn id(&self) -> UserId {
         self.id
+    }
+}
+
+struct PicturePath {
+    file_path: PathBuf,
+    upload_path: String,
+}
+
+impl PicturePath {
+    async fn generate(user_id: UserId) -> Result<Self> {
+        let temp_dir = std::env::temp_dir().join(env!("CARGO_PKG_NAME"));
+
+        fs::create_dir_all(&temp_dir)
+            .await
+            .or_else(|error| match error.kind() {
+                io::ErrorKind::AlreadyExists => Ok(()),
+                _ => Err(error),
+            })
+            .map_err(|err| Error::Io { path: temp_dir.to_path_buf(), source: err })?;
+
+        let s3_path = format!("profile_image/{}", user_id);
+
+        Ok(PicturePath { file_path: temp_dir.join(user_id.to_string()), upload_path: s3_path })
     }
 }

@@ -11,7 +11,7 @@ use serde::Serialize;
 use crate::{
     schema::{
         PhoneVerificationSchema, PhoneVerificationSetupSchema, ProfileBioUpdateSchema,
-        RegistrationSchema, TokenSchema,
+        ProfilePictureUpdateSchema, RegistrationSchema, TokenSchema,
     },
     user::{
         account::{User, UserId},
@@ -81,6 +81,24 @@ pub async fn verify_phone(
     PhoneVerification::cancel(&phone, &state.database).await?;
 
     Ok(Json(create_jwt_token_pairs(&user, &state).await?))
+}
+
+pub(crate) async fn update_profile_picture(
+    Extension(mut user): Extension<User>,
+    State(state): State<Arc<AppState>>,
+    TypedMultipart(ProfilePictureUpdateSchema { picture }): TypedMultipart<
+        ProfilePictureUpdateSchema,
+    >,
+) -> Result<impl IntoResponse> {
+    let picture_url = user.update_picture(picture, &state.s3, &state.database).await?;
+
+    #[derive(Serialize)]
+    struct PictureUpdateResult {
+        id: UserId,
+        picture: String,
+    }
+
+    Ok(Json(PictureUpdateResult { id: user.id(), picture: picture_url }))
 }
 
 pub(crate) async fn update_profile_bio(

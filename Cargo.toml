@@ -11,6 +11,8 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+aws-config = "0.56.1"
+aws-sdk-s3 = "0.31.2"
 axum = { version = "0.6.20", features = ["headers"] }
 axum-extra = { version = "0.8.0", features = ["cookie"] }
 axum_typed_multipart = "0.10.0"

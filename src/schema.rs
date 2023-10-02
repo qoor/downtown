@@ -23,12 +23,6 @@ pub struct RegistrationSchema {
 }
 
 #[derive(TryFromMultipart)]
-pub struct ProfileUpdateSchema {
-    pub photo: NamedTempFile,
-    pub description: String,
-}
-
-#[derive(TryFromMultipart)]
 pub struct PhoneVerificationSetupSchema {
     pub phone: String,
 }
@@ -49,7 +43,7 @@ pub struct UserSchema {
     pub town: Town,
     pub verification_type: String,
     pub verification_photo_url: String,
-    pub photo: String,
+    pub picture: String,
     pub bio: String,
 }
 
@@ -61,8 +55,8 @@ pub struct TokenSchema {
 }
 
 #[derive(TryFromMultipart)]
-pub struct ProfilePhotoUpdateSchema {
-    pub photo: FieldData<NamedTempFile>,
+pub struct ProfilePictureUpdateSchema {
+    pub picture: FieldData<NamedTempFile>,
 }
 
 #[derive(TryFromMultipart)]

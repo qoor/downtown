@@ -32,6 +32,14 @@ pub enum Error {
     TokenNotExists,
     #[error("the token has been expired")]
     TokenExpired,
+    #[error("failed to upload file")]
+    Upload { path: std::path::PathBuf, source: BoxDynError },
+    #[error("an error occurred while processing the file to be uploaded")]
+    FileToStream { path: std::path::PathBuf, source: BoxDynError },
+    #[error("an error occurred while processing the file to be uploaded")]
+    PersistFile { path: std::path::PathBuf, source: BoxDynError },
+    #[error("an error occurred while processing I/O")]
+    Io { path: std::path::PathBuf, source: std::io::Error },
     #[error("unhandled exception")]
     Unhandled(BoxDynError),
 }
@@ -48,6 +56,10 @@ impl Error {
             Error::InvalidToken => StatusCode::BAD_REQUEST,
             Error::TokenNotExists => StatusCode::NOT_FOUND,
             Error::TokenExpired => StatusCode::UNAUTHORIZED,
+            Error::Upload { path: _, source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::FileToStream { path: _, source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::PersistFile { path: _, source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::Io { path: _, source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Unhandled(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -61,6 +73,21 @@ impl IntoResponse for Error {
             }
             Error::Database(ref err) => error!("database error: {err}"),
             Error::Token(ref err) => error!("jsonwebtoken error: {err}"),
+            Error::Upload { ref path, ref source } => {
+                error!("failed to upload file {}: {source}", path.to_string_lossy())
+            }
+            Error::FileToStream { ref path, ref source } => {
+                error!(
+                    "failed to create byte stream from file {}: {source}",
+                    path.to_string_lossy()
+                )
+            }
+            Error::PersistFile { ref path, ref source } => {
+                error!("failed to persist the file {}: {source}", path.to_string_lossy())
+            }
+            Error::Io { ref path, ref source } => {
+                error!("{} I/O error: {source}", path.to_string_lossy())
+            }
             Error::Unhandled(ref err) => error!("unhandled error: {err}"),
 
             _ => (),

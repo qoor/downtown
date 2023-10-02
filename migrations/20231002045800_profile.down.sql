@@ -1,6 +1,6 @@
 -- Add down migration script here
 
 ALTER TABLE `user`
-  DROP COLUMN `photo`,
+  DROP COLUMN `picture`,
   DROP COLUMN `bio`
 ;
