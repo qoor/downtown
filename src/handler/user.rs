@@ -28,6 +28,13 @@ pub async fn create_user(
     Ok(Json(create_jwt_token_pairs(&user, &state).await?))
 }
 
+pub(crate) async fn get_user_info(
+    Extension(user): Extension<User>,
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse> {
+    Ok(Json(user.to_schema(&state.database).await?))
+}
+
 pub(crate) async fn refresh_verification(
     Extension(user): Extension<User>,
     State(state): State<Arc<AppState>>,
