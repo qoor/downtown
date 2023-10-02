@@ -36,6 +36,10 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
         .route("/user", post(handler::user::create_user))
         .route("/user/me", get(handler::user::get_user_info).route_layer(auth_layer.clone()))
         .route(
+            "/user/me/bio",
+            patch(handler::user::update_profile_bio).route_layer(auth_layer.clone()),
+        )
+        .route(
             "/user/verification",
             patch(handler::user::refresh_verification).route_layer(auth_layer.clone()),
         )

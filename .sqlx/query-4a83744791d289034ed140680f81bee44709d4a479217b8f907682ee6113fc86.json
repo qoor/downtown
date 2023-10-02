@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT\nid,\nname,\nphone,\nbirthdate,\nsex as `sex: Sex`,\ntown_id,\nverification_type as `verification_type: IdVerificationType`,\nverification_photo_url,\nrefresh_token,\ncreated_at,\nupdated_at\nFROM user WHERE id = ?",
+  "query": "SELECT\nid,\nname,\nphone,\nbirthdate,\nsex as `sex: Sex`,\ntown_id,\nverification_type as `verification_type: IdVerificationType`,\nverification_photo_url,\nphoto,\nbio,\nrefresh_token,\ncreated_at,\nupdated_at\nFROM user WHERE id = ?",
   "describe": {
     "columns": [
       {
@@ -85,6 +85,26 @@
       },
       {
         "ordinal": 8,
+        "name": "photo",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL",
+          "char_set": 224,
+          "max_size": 16384
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "bio",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "char_set": 224,
+          "max_size": 2048
+        }
+      },
+      {
+        "ordinal": 10,
         "name": "refresh_token",
         "type_info": {
           "type": "VarString",
@@ -94,7 +114,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 11,
         "name": "created_at",
         "type_info": {
           "type": "Timestamp",
@@ -104,7 +124,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 12,
         "name": "updated_at",
         "type_info": {
           "type": "Timestamp",
@@ -126,10 +146,12 @@
       false,
       false,
       false,
+      false,
+      true,
       true,
       false,
       false
     ]
   },
-  "hash": "7e87f596373de1989dbe684d44467f8c913e720fa7b916caf74782758aedd006"
+  "hash": "4a83744791d289034ed140680f81bee44709d4a479217b8f907682ee6113fc86"
 }

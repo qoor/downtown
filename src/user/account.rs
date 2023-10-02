@@ -23,6 +23,8 @@ pub(crate) struct User {
     town_id: TownId,
     verification_type: IdVerificationType,
     verification_photo_url: String,
+    photo: String,
+    bio: Option<String>,
     refresh_token: Option<String>,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
@@ -85,6 +87,8 @@ sex as `sex: Sex`,
 town_id,
 verification_type as `verification_type: IdVerificationType`,
 verification_photo_url,
+photo,
+bio,
 refresh_token,
 created_at,
 updated_at
@@ -107,6 +111,8 @@ sex as `sex: Sex`,
 town_id,
 verification_type as `verification_type: IdVerificationType`,
 verification_photo_url,
+photo,
+bio,
 refresh_token,
 created_at,
 updated_at
@@ -133,6 +139,8 @@ FROM user WHERE phone = ?",
             town,
             verification_type: self.verification_type.to_string(),
             verification_photo_url: self.verification_photo_url.to_string(),
+            photo: self.photo.clone(),
+            bio: self.bio.clone().unwrap_or(String::new()),
         })
     }
 
@@ -146,6 +154,15 @@ FROM user WHERE phone = ?",
             .await?;
 
         Ok(())
+    }
+
+    pub(crate) async fn update_bio(&mut self, bio: &str, db: &sqlx::Pool<MySql>) -> Result<()> {
+        Ok(sqlx::query!("UPDATE user SET bio = ? WHERE id = ?", bio, self.id)
+            .execute(db)
+            .await
+            .map(|_| {
+                self.bio = Some(bio.to_string());
+            })?)
     }
 
     pub(crate) fn id(&self) -> UserId {

@@ -6,12 +6,18 @@ use axum::{extract::State, response::IntoResponse, Extension, Json};
 use axum_typed_multipart::TypedMultipart;
 use chrono::Duration;
 use hyper::StatusCode;
+use serde::Serialize;
 
 use crate::{
     schema::{
-        PhoneVerificationSchema, PhoneVerificationSetupSchema, RegistrationSchema, TokenSchema,
+        PhoneVerificationSchema, PhoneVerificationSetupSchema, ProfileBioUpdateSchema,
+        RegistrationSchema, TokenSchema,
     },
-    user::{account::User, jwt::Token, verification::PhoneVerification},
+    user::{
+        account::{User, UserId},
+        jwt::Token,
+        verification::PhoneVerification,
+    },
     AppState, Result,
 };
 
@@ -75,6 +81,22 @@ pub async fn verify_phone(
     PhoneVerification::cancel(&phone, &state.database).await?;
 
     Ok(Json(create_jwt_token_pairs(&user, &state).await?))
+}
+
+pub(crate) async fn update_profile_bio(
+    Extension(mut user): Extension<User>,
+    State(state): State<Arc<AppState>>,
+    TypedMultipart(ProfileBioUpdateSchema { bio }): TypedMultipart<ProfileBioUpdateSchema>,
+) -> Result<impl IntoResponse> {
+    user.update_bio(&bio, &state.database).await?;
+
+    #[derive(Serialize)]
+    struct BioUpdateResult {
+        id: UserId,
+        bio: String,
+    }
+
+    Ok(Json(BioUpdateResult { id: user.id(), bio }))
 }
 
 async fn create_jwt_token_pairs(user: &User, state: &Arc<AppState>) -> Result<TokenSchema> {

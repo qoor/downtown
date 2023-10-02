@@ -49,6 +49,8 @@ pub struct UserSchema {
     pub town: Town,
     pub verification_type: String,
     pub verification_photo_url: String,
+    pub photo: String,
+    pub bio: String,
 }
 
 #[derive(Serialize)]
@@ -56,4 +58,14 @@ pub struct TokenSchema {
     pub user_id: UserId,
     pub access_token: String,
     pub refresh_token: String,
+}
+
+#[derive(TryFromMultipart)]
+pub struct ProfilePhotoUpdateSchema {
+    pub photo: FieldData<NamedTempFile>,
+}
+
+#[derive(TryFromMultipart)]
+pub struct ProfileBioUpdateSchema {
+    pub bio: String,
 }
