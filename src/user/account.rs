@@ -13,7 +13,7 @@ use super::{IdVerificationType, Sex};
 
 pub(crate) type UserId = u64;
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(Debug, sqlx::FromRow, Clone)]
 pub(crate) struct User {
     id: UserId,
     name: String,
@@ -134,6 +134,18 @@ FROM user WHERE phone = ?",
             verification_type: self.verification_type.to_string(),
             verification_photo_url: self.verification_photo_url.to_string(),
         })
+    }
+
+    pub(crate) async fn update_refresh_token(
+        &self,
+        token: &str,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<()> {
+        sqlx::query!("UPDATE user SET refresh_token = ? WHERE id = ?", token, self.id)
+            .execute(db)
+            .await?;
+
+        Ok(())
     }
 
     pub(crate) fn id(&self) -> UserId {

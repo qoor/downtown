@@ -54,12 +54,12 @@ impl PhoneVerification {
     }
 
     async fn from_phone(phone: &str, db: &sqlx::Pool<MySql>) -> Result<Self> {
-        Ok(sqlx::query_as!(Self, "SELECT * FROM phone_verification WHERE phone = ?", phone)
+        sqlx::query_as!(Self, "SELECT * FROM phone_verification WHERE phone = ?", phone)
             .fetch_one(db)
             .await
             .map_err(|error| match error {
                 sqlx::Error::RowNotFound => Error::Verification,
                 _ => Error::Database(error),
-            })?)
+            })
     }
 }

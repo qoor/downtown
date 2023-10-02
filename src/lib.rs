@@ -13,7 +13,10 @@ use std::sync::Arc;
 
 pub use error::{Error, Result};
 
-use axum::routing::{get, post, put};
+use axum::{
+    middleware,
+    routing::{get, patch, post, put},
+};
 use config::Config;
 use sqlx::MySql;
 
@@ -25,9 +28,16 @@ pub struct AppState {
 pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
     let state = Arc::new(AppState { config, database: database.clone() });
 
+    let auth_layer =
+        middleware::from_fn_with_state(state.clone(), user::jwt::authorize_user_middleware);
+
     let root_routers = axum::Router::new().route("/", get(handler::root));
     let user_routers = axum::Router::new()
         .route("/user", post(handler::user::create_user))
+        .route(
+            "/user/verification",
+            patch(handler::user::refresh_verification).route_layer(auth_layer.clone()),
+        )
         .route("/user/verification/phone", post(handler::user::setup_phone_verification))
         .route("/user/verification/phone", put(handler::user::verify_phone));
 

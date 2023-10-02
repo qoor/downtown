@@ -8,7 +8,7 @@ use std::str::FromStr;
 
 use axum_typed_multipart::TryFromField;
 
-#[derive(Debug, TryFromField, sqlx::Type)]
+#[derive(Debug, TryFromField, sqlx::Type, Clone, Copy)]
 #[repr(u32)]
 #[try_from_field(rename_all = "snake_case")]
 pub enum Sex {
@@ -41,7 +41,7 @@ impl std::fmt::Display for Sex {
     }
 }
 
-#[derive(Debug, TryFromField, sqlx::Type)]
+#[derive(Debug, TryFromField, sqlx::Type, Clone, Copy)]
 #[repr(u32)]
 #[try_from_field(rename_all = "snake_case")]
 pub enum IdVerificationType {

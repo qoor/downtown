@@ -9,7 +9,6 @@ use axum::{
     response::IntoResponse,
     RequestPartsExt, TypedHeader,
 };
-use axum_extra::extract::CookieJar;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey};
 use serde::{Deserialize, Serialize};
@@ -17,9 +16,6 @@ use serde::{Deserialize, Serialize};
 use crate::{AppState, Error, Result};
 
 use super::account::{User, UserId};
-
-pub(crate) const ACCESS_TOKEN_COOKIE: &str = "access_token";
-pub(crate) const REFRESH_TOKEN_COOKIE: &str = "refresh_token";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct Claims {
