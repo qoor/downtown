@@ -10,6 +10,7 @@ use axum_typed_multipart::TryFromField;
 
 #[derive(Debug, TryFromField, sqlx::Type)]
 #[repr(u32)]
+#[try_from_field(rename_all = "snake_case")]
 pub enum Sex {
     Male = 1,
     Female = 2,
@@ -42,6 +43,7 @@ impl std::fmt::Display for Sex {
 
 #[derive(Debug, TryFromField, sqlx::Type)]
 #[repr(u32)]
+#[try_from_field(rename_all = "snake_case")]
 pub enum IdVerificationType {
     IdCard = 1,
     DriverLicense = 2,
