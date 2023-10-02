@@ -101,14 +101,8 @@ pub(crate) async fn authorize_user_middleware<B>(
     let access_token = parts
         .extract::<TypedHeader<Authorization<Bearer>>>()
         .await
-        .map(|header| {
-            println!("Token: {}", header.token());
-            header.token().to_string()
-        })
-        .map_err(|_| {
-            println!("Token not found");
-            Error::TokenNotExists
-        })
+        .map(|header| header.token().to_string())
+        .map_err(|_| Error::TokenNotExists)
         .ok();
     let user_id = authorize_user(access_token.as_deref(), state.config.public_key()).await?;
 
