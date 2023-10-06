@@ -49,10 +49,7 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
             "/user/me/bio",
             patch(handler::user::update_profile_bio).route_layer(auth_layer.clone()),
         )
-        .route(
-            "/user/verification",
-            patch(handler::user::refresh_verification).route_layer(auth_layer.clone()),
-        )
+        .route("/user/verification", patch(handler::user::refresh_verification))
         .route("/user/verification/phone", post(handler::user::setup_phone_verification))
         .route("/user/verification/phone", put(handler::user::verify_phone));
 

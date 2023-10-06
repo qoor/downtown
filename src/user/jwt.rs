@@ -18,7 +18,7 @@ use crate::{AppState, Error, Result};
 use super::account::{User, UserId};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct Claims {
+struct Claims {
     /// Issuer of the JWT
     iss: String,
     /// Time at which the JWT was issued; can be used to determine age of the
@@ -30,14 +30,7 @@ pub(crate) struct Claims {
     sub: String,
 }
 
-impl Claims {
-    pub(crate) fn expires_in(&self) -> i64 {
-        self.exp - self.iat
-    }
-}
-
 pub(crate) struct Token {
-    claims: Claims,
     encoded_token: String,
     user_id: UserId,
 }
@@ -56,7 +49,7 @@ impl Token {
         };
 
         Ok(jsonwebtoken::encode(&jsonwebtoken::Header::new(Algorithm::RS256), &claims, private_key)
-            .map(|token| Token { claims, encoded_token: token, user_id })?)
+            .map(|token| Token { encoded_token: token, user_id })?)
     }
 
     pub(crate) fn from_encoded_token(
@@ -82,11 +75,15 @@ impl Token {
         let user_id =
             claims.sub.parse::<UserId>().map_err(|err| Error::Unhandled(Box::new(err)))?;
 
-        Ok(Token { claims, encoded_token, user_id })
+        Ok(Token { encoded_token, user_id })
     }
 
     pub(crate) fn encoded_token(&self) -> &str {
         &self.encoded_token
+    }
+
+    pub(crate) fn user_id(&self) -> UserId {
+        self.user_id
     }
 }
 
@@ -104,7 +101,9 @@ pub(crate) async fn authorize_user_middleware<B>(
         .map(|header| header.token().to_string())
         .map_err(|_| Error::TokenNotExists)
         .ok();
-    let user_id = authorize_user(access_token.as_deref(), state.config.public_key()).await?;
+    let user_id = authorize_user(access_token.as_deref(), state.config.public_key())
+        .await
+        .map(|token| token.user_id)?;
 
     let mut req = http::Request::from_parts(parts, body);
 
@@ -115,9 +114,6 @@ pub(crate) async fn authorize_user_middleware<B>(
     Ok(next.run(req).await)
 }
 
-pub(crate) async fn authorize_user(
-    access_token: Option<&str>,
-    public_key: &DecodingKey,
-) -> Result<UserId> {
-    Token::from_encoded_token(access_token, public_key).map(|token| token.user_id)
+pub(crate) async fn authorize_user(token: Option<&str>, public_key: &DecodingKey) -> Result<Token> {
+    Token::from_encoded_token(token, public_key)
 }

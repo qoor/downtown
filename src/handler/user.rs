@@ -2,7 +2,12 @@
 
 use std::sync::Arc;
 
-use axum::{extract::State, response::IntoResponse, Extension, Json};
+use axum::{
+    extract::State,
+    headers::{authorization::Bearer, Authorization},
+    response::IntoResponse,
+    Extension, Json, TypedHeader,
+};
 use axum_typed_multipart::TypedMultipart;
 use chrono::Duration;
 use hyper::StatusCode;
@@ -15,7 +20,7 @@ use crate::{
     },
     user::{
         account::{User, UserId},
-        jwt::Token,
+        jwt::{authorize_user, Token},
         verification::PhoneVerification,
     },
     AppState, Result,
@@ -42,19 +47,20 @@ pub(crate) async fn get_user_info(
 }
 
 pub(crate) async fn refresh_verification(
-    Extension(user): Extension<User>,
+    TypedHeader(Authorization(refresh_token)): TypedHeader<Authorization<Bearer>>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse> {
-    let refresh_token = Token::new(
-        state.config.private_key(),
-        Duration::seconds(state.config.refresh_token_max_age()),
-        user.id(),
-    )
-    .map(|token| token.encoded_token().to_string())?;
+    let refresh_token = refresh_token.token();
+    let token = authorize_user(Some(refresh_token), state.config.public_key()).await?;
+    let user = User::from_id(token.user_id(), &state.database).await?;
 
-    user.update_refresh_token(&refresh_token, &state.database).await?;
+    user.verify_refresh_token(refresh_token)?;
 
-    Ok(StatusCode::OK)
+    let tokens = create_jwt_token_pairs(&user, &state).await?;
+
+    user.update_refresh_token(&tokens.refresh_token, &state.database).await?;
+
+    Ok(Json(tokens))
 }
 
 pub async fn setup_phone_verification(

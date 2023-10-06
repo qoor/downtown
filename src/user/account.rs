@@ -162,6 +162,22 @@ FROM user WHERE phone = ?",
         Ok(())
     }
 
+    pub(crate) fn verify_refresh_token(&self, refresh_token: &str) -> Result<()> {
+        if refresh_token.is_empty() {
+            return Err(Error::InvalidToken);
+        }
+
+        if let Some(user_token) = &self.refresh_token {
+            if user_token != refresh_token {
+                return Err(Error::InvalidToken);
+            }
+        } else {
+            return Err(Error::InvalidToken);
+        }
+
+        Ok(())
+    }
+
     pub(crate) async fn update_bio(&mut self, bio: &str, db: &sqlx::Pool<MySql>) -> Result<()> {
         Ok(sqlx::query!("UPDATE user SET bio = ? WHERE id = ?", bio, self.id)
             .execute(db)
