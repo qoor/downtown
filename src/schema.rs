@@ -20,6 +20,7 @@ pub struct RegistrationSchema {
     pub phone: String,
     pub address: String,
     pub verification_type: IdVerificationType,
+    #[form_data(limit = "unlimited")]
     pub verification_photo: FieldData<NamedTempFile>,
 }
 
@@ -57,6 +58,7 @@ pub struct TokenSchema {
 
 #[derive(TryFromMultipart)]
 pub struct ProfilePictureUpdateSchema {
+    #[form_data(limit = "unlimited")]
     pub picture: FieldData<NamedTempFile>,
 }
 
@@ -69,12 +71,14 @@ pub struct ProfileBioUpdateSchema {
 pub struct PostCreationSchema {
     pub author_id: UserId,
     pub content: String,
+    #[form_data(limit = "unlimited")]
     pub images: Vec<FieldData<NamedTempFile>>,
 }
 
 #[derive(TryFromMultipart)]
 pub struct PostEditSchema {
     pub content: String,
+    #[form_data(limit = "unlimited")]
     pub images: Vec<FieldData<NamedTempFile>>,
 }
 
