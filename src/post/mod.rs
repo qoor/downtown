@@ -13,7 +13,7 @@ use crate::{aws::S3Client, user::account::UserId, Error, Result};
 
 pub(crate) type PostId = u64;
 
-const POST_IMAGE_PATH: &str = "post_image";
+const POST_IMAGE_PATH: &str = "post_image/";
 
 pub(crate) struct Post {
     id: PostId,
@@ -149,7 +149,7 @@ FROM post WHERE author_id = ?",
             let dir = std::env::temp_dir().join(std::env!("CARGO_PKG_NAME"));
             let temp_path = dir.join(&basename);
 
-            fs::create_dir(&dir)
+            fs::create_dir_all(&dir)
                 .await
                 .map_err(|err| Error::Io { path: dir.to_path_buf(), source: err })?;
 
