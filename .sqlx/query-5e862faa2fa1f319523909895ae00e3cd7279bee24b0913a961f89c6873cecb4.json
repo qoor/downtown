@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE post SET content = ? WHERE id = ? AND author_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "5e862faa2fa1f319523909895ae00e3cd7279bee24b0913a961f89c6873cecb4"
+}

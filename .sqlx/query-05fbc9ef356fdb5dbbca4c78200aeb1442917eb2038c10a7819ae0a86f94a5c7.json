@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM post_image WHERE post_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "05fbc9ef356fdb5dbbca4c78200aeb1442917eb2038c10a7819ae0a86f94a5c7"
+}

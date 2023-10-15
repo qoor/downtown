@@ -6,6 +6,7 @@ pub mod error;
 
 mod aws;
 mod handler;
+mod post;
 mod schema;
 mod town;
 mod user;
@@ -16,7 +17,7 @@ pub use error::{Error, Result};
 
 use axum::{
     middleware,
-    routing::{get, patch, post, put},
+    routing::{delete, get, patch, post, put},
 };
 use config::Config;
 use sqlx::MySql;
@@ -52,8 +53,16 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
         .route("/user/verification", patch(handler::user::refresh_verification))
         .route("/user/verification/phone", post(handler::user::setup_phone_verification))
         .route("/user/verification/phone", put(handler::user::verify_phone));
+    let post_routers = axum::Router::new()
+        .route("/post", post(handler::post::create_post))
+        .route("/post/:id", patch(handler::post::edit_post))
+        .route("/post/:id", delete(handler::post::delete_post));
 
-    axum::Router::new().merge(root_routers).merge(user_routers).with_state(state)
+    axum::Router::new()
+        .merge(root_routers)
+        .merge(user_routers)
+        .merge(post_routers)
+        .with_state(state)
 }
 
 pub fn about() -> String {

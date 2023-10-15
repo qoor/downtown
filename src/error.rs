@@ -8,6 +8,8 @@ use axum::{
 use serde::Serialize;
 use tracing::error;
 
+use crate::post::{comment::CommentId, PostId};
+
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 pub(crate) type BoxDynError = Box<dyn std::error::Error + Send + Sync + 'static>;
@@ -34,12 +36,18 @@ pub enum Error {
     TokenExpired,
     #[error("failed to upload file")]
     Upload { path: std::path::PathBuf, source: BoxDynError },
+    #[error("failed to delete uploaded file")]
+    DeleteUploaded { path: String, source: BoxDynError },
     #[error("an error occurred while processing the file to be uploaded")]
     FileToStream { path: std::path::PathBuf, source: BoxDynError },
     #[error("an error occurred while processing the file to be uploaded")]
     PersistFile { path: std::path::PathBuf, source: BoxDynError },
     #[error("an error occurred while processing I/O")]
     Io { path: std::path::PathBuf, source: std::io::Error },
+    #[error("post id {0} not found")]
+    PostNotFound(PostId),
+    #[error("comment id {0} not found")]
+    CommentNotFound(CommentId),
     #[error("unhandled exception")]
     Unhandled(BoxDynError),
 }
@@ -57,9 +65,12 @@ impl Error {
             Error::TokenNotExists => StatusCode::NOT_FOUND,
             Error::TokenExpired => StatusCode::UNAUTHORIZED,
             Error::Upload { path: _, source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::DeleteUploaded { path: _, source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Error::FileToStream { path: _, source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Error::PersistFile { path: _, source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Io { path: _, source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::PostNotFound(_) => StatusCode::NOT_FOUND,
+            Error::CommentNotFound(_) => StatusCode::NOT_FOUND,
             Error::Unhandled(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

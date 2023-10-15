@@ -6,6 +6,7 @@ use serde::Serialize;
 use tempfile::NamedTempFile;
 
 use crate::{
+    post::PostId,
     town::Town,
     user::{self, account::UserId, IdVerificationType},
 };
@@ -62,4 +63,23 @@ pub struct ProfilePictureUpdateSchema {
 #[derive(TryFromMultipart)]
 pub struct ProfileBioUpdateSchema {
     pub bio: String,
+}
+
+#[derive(TryFromMultipart)]
+pub struct PostCreationSchema {
+    pub author_id: UserId,
+    pub content: String,
+    pub images: Vec<FieldData<NamedTempFile>>,
+}
+
+#[derive(TryFromMultipart)]
+pub struct PostEditSchema {
+    pub content: String,
+    pub images: Vec<FieldData<NamedTempFile>>,
+}
+
+#[derive(Serialize)]
+pub struct PostResultSchema {
+    pub post_id: PostId,
+    pub author_id: UserId,
 }

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM post WHERE id = ? AND author_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "86e6e6017f16b498759d2c33b3cc3b35488137d8f47c59f7a6a270cbca7a4c51"
+}

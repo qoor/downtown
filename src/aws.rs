@@ -43,4 +43,10 @@ impl S3Client {
 
         Ok(format!("https://{}.s3.{}.amazonaws.com/{}", self.bucket, self.region, target_path))
     }
+
+    pub async fn delete_file(&self, target_path: &str) -> Result<String> {
+        self.client.delete_object().bucket(&self.bucket).key(target_path).send().await.unwrap();
+
+        Ok(format!("https://{}.s3.{}.amazonaws.com/{}", self.bucket, self.region, target_path))
+    }
 }
