@@ -196,11 +196,11 @@ FROM post WHERE author_id = ?",
 
         let mut sql = QueryBuilder::<MySql>::new("DELETE FROM post_image WHERE id IN (");
 
-        let mut seperated = sql.separated(", ");
+        let mut separated = sql.separated(", ");
         deleted_ids.iter().for_each(|deleted_id| {
-            seperated.push_bind(deleted_id);
+            separated.push_bind(deleted_id);
         });
-        seperated.push_unseparated(")");
+        separated.push_unseparated(")");
 
         let sql = sql.build();
         sqlx::query(sql.sql()).execute(db).await?;
