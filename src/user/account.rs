@@ -146,7 +146,7 @@ FROM user WHERE phone = ?",
             verification_type: self.verification_type.to_string(),
             verification_photo_url: self.verification_photo_url.to_string(),
             picture: self.picture.clone(),
-            bio: self.bio.clone().unwrap_or(String::new()),
+            bio: self.bio.clone().unwrap_or_default(),
         })
     }
 
