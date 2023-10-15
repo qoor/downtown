@@ -16,6 +16,7 @@ use std::sync::Arc;
 pub use error::{Error, Result};
 
 use axum::{
+    extract::DefaultBodyLimit,
     middleware,
     routing::{delete, get, patch, post, put},
 };
@@ -62,6 +63,7 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
         .merge(root_routers)
         .merge(user_routers)
         .merge(post_routers)
+        .layer(DefaultBodyLimit::max(1024 * 10))
         .with_state(state)
 }
 
