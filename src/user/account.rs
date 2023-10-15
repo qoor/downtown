@@ -82,7 +82,7 @@ verification_photo_url) VALUES (
     }
 
     pub(crate) async fn from_id(id: UserId, db: &sqlx::Pool<MySql>) -> Result<Self> {
-        Ok(sqlx::query_as!(
+        sqlx::query_as!(
             Self,
             "SELECT
 id,
@@ -102,7 +102,11 @@ FROM user WHERE id = ?",
             id
         )
         .fetch_one(db)
-        .await?)
+        .await
+        .map_err(|err| match err {
+            sqlx::Error::RowNotFound => Error::UserNotFound(id.to_string()),
+            _ => Error::Database(err),
+        })
     }
 
     pub(crate) async fn from_phone(phone: &str, db: &sqlx::Pool<MySql>) -> Result<Self> {

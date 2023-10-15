@@ -44,7 +44,7 @@ impl Post {
                 .await
                 .map(|row| row.last_insert_id())?;
         let post = Self::from_id(id, db).await?;
-        let _ = post.upload_images(images, db, s3).await;
+        post.upload_images(images, db, s3).await?;
 
         tx.commit().await?;
 
@@ -74,8 +74,8 @@ impl Post {
         .execute(db)
         .await?;
 
-        let _ = self.delete_images(db, s3).await;
-        let _ = self.upload_images(images, db, s3).await;
+        self.delete_images(db, s3).await?;
+        self.upload_images(images, db, s3).await?;
 
         tx.commit().await?;
 
@@ -98,7 +98,7 @@ impl Post {
             .execute(db)
             .await?;
 
-        let _ = self.delete_images(db, s3).await;
+        self.delete_images(db, s3).await?;
 
         Ok(())
     }
@@ -152,10 +152,11 @@ FROM post WHERE author_id = ?",
                 source: err.into(),
             })?;
 
-            let url = s3.push_file(&temp_path, &(String::from(POST_IMAGE_PATH) + &basename)).await;
-            if let Ok(url) = url {
-                image_urls.push(url)
-            }
+            let url =
+                s3.push_file(&temp_path, &(String::from(POST_IMAGE_PATH) + &basename)).await?;
+            // if let Ok(url) = url {
+            image_urls.push(url)
+            // }
         }
 
         sqlx::query!("DELETE FROM post_image WHERE post_id = ?", self.id).execute(db).await?;
