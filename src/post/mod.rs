@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use rand::{distributions::Alphanumeric, Rng};
 use sqlx::{Execute, MySql, QueryBuilder};
 use tempfile::NamedTempFile;
+use tokio::fs;
 
 use crate::{aws::S3Client, user::account::UserId, Error, Result};
 
@@ -145,7 +146,12 @@ FROM post WHERE author_id = ?",
         for image in images {
             let basename: String =
                 rand::thread_rng().sample_iter(Alphanumeric).take(32).map(char::from).collect();
-            let temp_path = std::env::temp_dir().join(std::env!("CARGO_PKG_NAME")).join(&basename);
+            let dir = std::env::temp_dir().join(std::env!("CARGO_PKG_NAME"));
+            let temp_path = dir.join(&basename);
+
+            fs::create_dir(&dir)
+                .await
+                .map_err(|err| Error::Io { path: dir.to_path_buf(), source: err })?;
 
             image.contents.persist(&temp_path).map_err(|err| Error::PersistFile {
                 path: temp_path.clone(),
