@@ -175,7 +175,6 @@ FROM post WHERE author_id = ?",
                 sql.push_bind(url);
             });
             let sql = sql.build().persistent(false);
-            println!("{}", sql.sql());
             sqlx::query(sql.sql()).execute(db).await?;
         }
 
