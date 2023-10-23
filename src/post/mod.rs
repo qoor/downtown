@@ -171,8 +171,8 @@ FROM post WHERE author_id = ?",
             let mut sql =
                 QueryBuilder::<MySql>::new("INSERT INTO post_image (post_id, image_url) ");
             sql.push_values(image_urls.iter(), |mut sql, url| {
-                sql.push_bind(self.id);
-                sql.push_bind(url);
+                sql.push_bind(self.id as u32);
+                sql.push_bind(url.to_string());
             });
             let sql = sql.build().persistent(false);
             sqlx::query(sql.sql()).execute(db).await?;
