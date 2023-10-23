@@ -13,7 +13,7 @@ async fn main() {
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| "downtown=debug".into()),
         )
-        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::fmt::layer().with_file(true).with_line_number(true))
         .init();
 
     // Load environment variables from '.env' file
