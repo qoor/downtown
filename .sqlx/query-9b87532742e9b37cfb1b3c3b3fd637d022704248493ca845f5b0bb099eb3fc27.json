@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT\nid,\nname,\nphone,\nbirthdate,\nsex as `sex: Sex`,\ntown_id,\nverification_type as `verification_type: IdVerificationType`,\nverification_photo_url,\npicture,\nbio,\nrefresh_token,\ncreated_at,\nupdated_at\nFROM user WHERE phone = ?",
+  "query": "SELECT\nid,\nname,\nphone,\nbirthdate,\nsex as `sex: Sex`,\ntown_id,\nverified as `verified: bool`,\nverification_type as `verification_type: IdVerificationType`,\nverification_photo_url,\npicture,\nbio,\nrefresh_token,\ncreated_at,\nupdated_at\nFROM user WHERE id = ?",
   "describe": {
     "columns": [
       {
@@ -65,6 +65,16 @@
       },
       {
         "ordinal": 6,
+        "name": "verified: bool",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "NOT_NULL",
+          "char_set": 63,
+          "max_size": 1
+        }
+      },
+      {
+        "ordinal": 7,
         "name": "verification_type: IdVerificationType",
         "type_info": {
           "type": "Tiny",
@@ -74,7 +84,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "verification_photo_url",
         "type_info": {
           "type": "VarString",
@@ -84,7 +94,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "picture",
         "type_info": {
           "type": "VarString",
@@ -94,7 +104,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "bio",
         "type_info": {
           "type": "VarString",
@@ -104,7 +114,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "refresh_token",
         "type_info": {
           "type": "VarString",
@@ -114,7 +124,7 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "created_at",
         "type_info": {
           "type": "Timestamp",
@@ -124,7 +134,7 @@
         }
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "updated_at",
         "type_info": {
           "type": "Timestamp",
@@ -147,11 +157,12 @@
       false,
       false,
       false,
+      false,
       true,
       true,
       false,
       false
     ]
   },
-  "hash": "961307b7d1d4e481d863ab2b54163a5f3a911bb3bf5e169d31841d3ea65f45ca"
+  "hash": "9b87532742e9b37cfb1b3c3b3fd637d022704248493ca845f5b0bb099eb3fc27"
 }
