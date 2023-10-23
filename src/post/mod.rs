@@ -204,16 +204,18 @@ FROM post WHERE author_id = ?",
             }
         }
 
-        let mut sql = QueryBuilder::<MySql>::new("DELETE FROM post_image WHERE id IN (");
+        if !deleted_ids.is_empty() {
+            let mut sql = QueryBuilder::<MySql>::new("DELETE FROM post_image WHERE id IN (");
 
-        let mut separated = sql.separated(", ");
-        deleted_ids.iter().for_each(|deleted_id| {
-            separated.push_bind(deleted_id);
-        });
-        separated.push_unseparated(")");
+            let mut separated = sql.separated(", ");
+            deleted_ids.iter().for_each(|deleted_id| {
+                separated.push_bind(deleted_id);
+            });
+            separated.push_unseparated(")");
 
-        let sql = sql.build();
-        sqlx::query(sql.sql()).execute(db).await?;
+            let sql = sql.build().persistent(false);
+            sqlx::query(sql.sql()).execute(db).await?;
+        }
 
         Ok(())
     }
