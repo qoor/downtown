@@ -1,6 +1,7 @@
 // Copyright 2023. The downtown authors all rights reserved.
 
 use chrono::{DateTime, Utc};
+use serde::Serialize;
 use sqlx::MySql;
 
 use crate::{user::account::UserId, Error, Result};
@@ -9,6 +10,7 @@ use super::PostId;
 
 pub(crate) type CommentId = u64;
 
+#[derive(Debug, Serialize)]
 pub(crate) struct Comment {
     id: CommentId,
     post_id: PostId,

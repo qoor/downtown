@@ -64,6 +64,10 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
             post(handler::post::create_post_comment).route_layer(auth_layer.clone()),
         )
         .route(
+            "/post/:id/comment",
+            get(handler::post::get_post_comments).route_layer(auth_layer.clone()),
+        )
+        .route(
             "/post/:id/comment/:id",
             delete(handler::post::delete_post_comment).route_layer(auth_layer.clone()),
         );

@@ -90,6 +90,13 @@ pub(crate) async fn create_post_comment(
     )
 }
 
+pub(crate) async fn get_post_comments(
+    Path(post_id): Path<u64>,
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse> {
+    Comment::from_post_id(post_id, &state.database).await.map(Json)
+}
+
 pub(crate) async fn delete_post_comment(
     Path(post_id): Path<u64>,
     Path(comment_id): Path<u64>,
