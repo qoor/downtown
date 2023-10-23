@@ -56,6 +56,7 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
         .route("/user/verification/phone", put(handler::user::verify_phone));
     let post_routers = axum::Router::new()
         .route("/post", post(handler::post::create_post))
+        .route("/post/:id", get(handler::post::get_post))
         .route("/post/:id", patch(handler::post::edit_post))
         .route("/post/:id", delete(handler::post::delete_post))
         .route(

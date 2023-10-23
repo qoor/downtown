@@ -15,7 +15,9 @@ use crate::{
         comment::{Comment, CommentId},
         Post, PostId,
     },
-    schema::{CommentCreationSchema, PostCreationSchema, PostEditSchema, PostResultSchema},
+    schema::{
+        CommentCreationSchema, PostCreationSchema, PostEditSchema, PostGetResult, PostResultSchema,
+    },
     user::account::{User, UserId},
     AppState, Error, Result,
 };
@@ -29,6 +31,15 @@ pub(crate) async fn create_post(
     let post = Post::create(author_id, &content, images, &state.database, &state.s3).await?;
 
     Ok(Json(PostResultSchema { post_id: post.id(), author_id: post.author_id() }))
+}
+
+pub(crate) async fn get_post(
+    Path(post_id): Path<u64>,
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse> {
+    Post::from_id(post_id, &state.database)
+        .await
+        .map(|post| Json(Into::<PostGetResult>::into(post)))
 }
 
 pub(crate) async fn edit_post(

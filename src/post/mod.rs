@@ -9,7 +9,7 @@ use sqlx::{Execute, MySql, QueryBuilder};
 use tempfile::NamedTempFile;
 use tokio::fs;
 
-use crate::{aws::S3Client, user::account::UserId, Error, Result};
+use crate::{aws::S3Client, schema::PostGetResult, user::account::UserId, Error, Result};
 
 pub(crate) type PostId = u64;
 
@@ -213,5 +213,16 @@ FROM post WHERE author_id = ?",
         sqlx::query(sql.sql()).execute(db).await?;
 
         Ok(())
+    }
+}
+
+impl From<Post> for PostGetResult {
+    fn from(value: Post) -> Self {
+        Self {
+            id: value.id(),
+            author_id: value.author_id,
+            content: value.content,
+            created_at: value.created_at,
+        }
     }
 }

@@ -1,7 +1,7 @@
 // Copyright 2023. The downtown authors all rights reserved.
 
 use axum_typed_multipart::{FieldData, TryFromMultipart};
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
 use tempfile::NamedTempFile;
 
@@ -73,6 +73,14 @@ pub struct PostCreationSchema {
     pub content: String,
     #[form_data(limit = "unlimited")]
     pub images: Vec<FieldData<NamedTempFile>>,
+}
+
+#[derive(Serialize)]
+pub struct PostGetResult {
+    pub id: PostId,
+    pub author_id: UserId,
+    pub content: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(TryFromMultipart)]
