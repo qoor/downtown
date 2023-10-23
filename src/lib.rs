@@ -57,7 +57,15 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
     let post_routers = axum::Router::new()
         .route("/post", post(handler::post::create_post))
         .route("/post/:id", patch(handler::post::edit_post))
-        .route("/post/:id", delete(handler::post::delete_post));
+        .route("/post/:id", delete(handler::post::delete_post))
+        .route(
+            "/post/:id/comment",
+            post(handler::post::create_post_comment).route_layer(auth_layer.clone()),
+        )
+        .route(
+            "/post/:id/comment/:id",
+            delete(handler::post::delete_post_comment).route_layer(auth_layer.clone()),
+        );
 
     axum::Router::new()
         .merge(root_routers)

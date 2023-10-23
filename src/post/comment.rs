@@ -43,15 +43,6 @@ GROUP BY cs.parent_comment_id",
         post_id: PostId,
         author_id: UserId,
         content: &str,
-        db: &sqlx::Pool<MySql>,
-    ) -> Result<Self> {
-        Self::add_child(post_id, author_id, content, None, db).await
-    }
-
-    pub(crate) async fn add_child(
-        post_id: PostId,
-        author_id: UserId,
-        content: &str,
         parent_comment_id: Option<CommentId>,
         db: &sqlx::Pool<MySql>,
     ) -> Result<Self> {
@@ -105,7 +96,7 @@ IN (SELECT child_comment_id FROM post_comment_closure WHERE parent_comment_id = 
         Ok(())
     }
 
-    async fn from_id(id: CommentId, db: &sqlx::Pool<MySql>) -> Result<Self> {
+    pub(crate) async fn from_id(id: CommentId, db: &sqlx::Pool<MySql>) -> Result<Self> {
         sqlx::query_as!(
             Self,
             "SELECT
@@ -121,5 +112,17 @@ FROM post_comment WHERE id = ?",
         .fetch_optional(db)
         .await?
         .ok_or(Error::CommentNotFound(id))
+    }
+
+    pub(crate) fn id(&self) -> CommentId {
+        self.id
+    }
+
+    pub(crate) fn post_id(&self) -> PostId {
+        self.post_id
+    }
+
+    pub(crate) fn author_id(&self) -> Option<UserId> {
+        self.author_id
     }
 }

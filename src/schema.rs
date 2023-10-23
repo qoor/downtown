@@ -6,7 +6,7 @@ use serde::Serialize;
 use tempfile::NamedTempFile;
 
 use crate::{
-    post::PostId,
+    post::{comment::CommentId, PostId},
     town::Town,
     user::{self, account::UserId, IdVerificationType},
 };
@@ -86,4 +86,10 @@ pub struct PostEditSchema {
 pub struct PostResultSchema {
     pub post_id: PostId,
     pub author_id: UserId,
+}
+
+#[derive(TryFromMultipart)]
+pub struct CommentCreationSchema {
+    pub content: String,
+    pub parent_comment_id: Option<CommentId>,
 }

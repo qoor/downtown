@@ -48,6 +48,8 @@ pub enum Error {
     PostNotFound(PostId),
     #[error("comment id {0} not found")]
     CommentNotFound(CommentId),
+    #[error("invalid request")]
+    InvalidRequest,
     #[error("unhandled exception")]
     Unhandled(BoxDynError),
 }
@@ -71,6 +73,7 @@ impl Error {
             Error::Io { path: _, source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Error::PostNotFound(_) => StatusCode::NOT_FOUND,
             Error::CommentNotFound(_) => StatusCode::NOT_FOUND,
+            Error::InvalidRequest => StatusCode::BAD_REQUEST,
             Error::Unhandled(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
