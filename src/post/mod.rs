@@ -167,13 +167,16 @@ FROM post WHERE author_id = ?",
 
         sqlx::query!("DELETE FROM post_image WHERE post_id = ?", self.id).execute(db).await?;
 
-        let mut sql = QueryBuilder::<MySql>::new("INSERT INTO post_image (post_id, image_url) ");
-        sql.push_values(image_urls.iter(), |mut sql, url| {
-            sql.push_bind(self.id);
-            sql.push_bind(url);
-        });
-        let sql = sql.build().persistent(false);
-        sqlx::query(sql.sql()).execute(db).await?;
+        if !image_urls.is_empty() {
+            let mut sql =
+                QueryBuilder::<MySql>::new("INSERT INTO post_image (post_id, image_url) ");
+            sql.push_values(image_urls.iter(), |mut sql, url| {
+                sql.push_bind(self.id);
+                sql.push_bind(url);
+            });
+            let sql = sql.build().persistent(false);
+            sqlx::query(sql.sql()).execute(db).await?;
+        }
 
         Ok(())
     }
