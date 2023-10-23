@@ -33,7 +33,7 @@ c.deleted as `deleted: bool`,
 c.created_at
 FROM post_comment AS c
 INNER JOIN post_comment_closure AS cs ON (cs.parent_comment_id = c.id OR cs.child_comment_id = c.id)
-WHERE c.id = ?
+WHERE c.post_id = ?
 GROUP BY cs.parent_comment_id",
             post_id
         )

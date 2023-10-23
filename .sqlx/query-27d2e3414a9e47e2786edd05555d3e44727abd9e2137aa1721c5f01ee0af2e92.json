@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT\nc.id,\nc.post_id,\nc.author_id as `author_id?: UserId`,\nc.content,\nc.deleted as `deleted: bool`,\nc.created_at\nFROM post_comment AS c\nINNER JOIN post_comment_closure AS cs ON (cs.parent_comment_id = c.id OR cs.child_comment_id = c.id)\nWHERE c.id = ?\nGROUP BY cs.parent_comment_id",
+  "query": "SELECT\nc.id,\nc.post_id,\nc.author_id as `author_id?: UserId`,\nc.content,\nc.deleted as `deleted: bool`,\nc.created_at\nFROM post_comment AS c\nINNER JOIN post_comment_closure AS cs ON (cs.parent_comment_id = c.id OR cs.child_comment_id = c.id)\nWHERE c.post_id = ?\nGROUP BY cs.parent_comment_id",
   "describe": {
     "columns": [
       {
@@ -76,5 +76,5 @@
       false
     ]
   },
-  "hash": "14207909279d61d6131dbde3ebfb6a78f37624e30780af258d3c3e45c389fcbe"
+  "hash": "27d2e3414a9e47e2786edd05555d3e44727abd9e2137aa1721c5f01ee0af2e92"
 }
