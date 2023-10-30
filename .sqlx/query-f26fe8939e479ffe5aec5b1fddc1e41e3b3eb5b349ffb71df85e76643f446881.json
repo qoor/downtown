@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT id,\nauthor_id,\ncontent,\ncreated_at\nFROM post WHERE author_id = ?",
+  "query": "SELECT id,\nauthor_id,\npost_type,\ntown_id,\ncontent,\ncreated_at\nFROM post WHERE author_id = ?",
   "describe": {
     "columns": [
       {
@@ -25,6 +25,26 @@
       },
       {
         "ordinal": 2,
+        "name": "post_type",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL | MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "char_set": 63,
+          "max_size": 10
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "town_id",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL | MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "char_set": 63,
+          "max_size": 10
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "content",
         "type_info": {
           "type": "Blob",
@@ -34,7 +54,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 5,
         "name": "created_at",
         "type_info": {
           "type": "Timestamp",
@@ -51,8 +71,10 @@
       false,
       false,
       false,
+      false,
+      false,
       false
     ]
   },
-  "hash": "64bb9c0f0d7ba69dedc99c74f5da3320c294946aeb9fd0f6078d777508265fa4"
+  "hash": "f26fe8939e479ffe5aec5b1fddc1e41e3b3eb5b349ffb71df85e76643f446881"
 }

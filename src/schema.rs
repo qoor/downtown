@@ -6,8 +6,8 @@ use serde::Serialize;
 use tempfile::NamedTempFile;
 
 use crate::{
-    post::{comment::CommentId, PostId},
-    town::Town,
+    post::{comment::CommentId, PostId, PostType},
+    town::{Town, TownId},
     user::{self, account::UserId, IdVerificationType},
 };
 
@@ -70,6 +70,7 @@ pub struct ProfileBioUpdateSchema {
 #[derive(TryFromMultipart)]
 pub struct PostCreationSchema {
     pub author_id: UserId,
+    pub post_type: PostType,
     pub content: String,
     #[form_data(limit = "unlimited")]
     pub images: Vec<FieldData<NamedTempFile>>,
@@ -79,6 +80,8 @@ pub struct PostCreationSchema {
 pub struct PostGetResult {
     pub id: PostId,
     pub author_id: UserId,
+    pub post_type: PostType,
+    pub town_id: TownId,
     pub content: String,
     pub created_at: DateTime<Utc>,
 }

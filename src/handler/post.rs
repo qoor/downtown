@@ -25,7 +25,7 @@ use crate::{
 pub(crate) async fn create_post(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    TypedMultipart(PostCreationSchema { author_id, content, images }): TypedMultipart<
+    TypedMultipart(PostCreationSchema { author_id, post_type, content, images }): TypedMultipart<
         PostCreationSchema,
     >,
 ) -> Result<impl IntoResponse> {
@@ -33,7 +33,16 @@ pub(crate) async fn create_post(
         return Err(Error::Verification);
     }
 
-    let post = Post::create(author_id, &content, images, &state.database, &state.s3).await?;
+    let post = Post::create(
+        author_id,
+        post_type,
+        user.town_id(),
+        &content,
+        images,
+        &state.database,
+        &state.s3,
+    )
+    .await?;
 
     Ok(Json(PostResultSchema { post_id: post.id(), author_id: post.author_id() }))
 }

@@ -223,6 +223,10 @@ FROM user WHERE phone = ?",
     pub(crate) fn is_verified(&self) -> bool {
         self.verified
     }
+
+    pub(crate) fn town_id(&self) -> TownId {
+        self.town_id
+    }
 }
 
 struct PicturePath {

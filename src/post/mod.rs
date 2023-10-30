@@ -2,22 +2,63 @@
 
 pub(crate) mod comment;
 
-use axum_typed_multipart::FieldData;
+use axum::{async_trait, body};
+use axum_typed_multipart::{FieldData, FieldMetadata, TryFromChunks, TypedMultipartError};
 use chrono::{DateTime, Utc};
 use rand::{distributions::Alphanumeric, Rng};
-use sqlx::{Execute, MySql, QueryBuilder};
+use serde::Serialize;
+use sqlx::{MySql, QueryBuilder};
 use tempfile::NamedTempFile;
 use tokio::fs;
 
-use crate::{aws::S3Client, schema::PostGetResult, user::account::UserId, Error, Result};
+use crate::{
+    aws::S3Client, schema::PostGetResult, town::TownId, user::account::UserId, Error, Result,
+};
 
 pub(crate) type PostId = u64;
 
 const POST_IMAGE_PATH: &str = "post_image/";
 
+#[derive(Clone, Copy, sqlx::Type, Serialize)]
+#[repr(u32)]
+pub enum PostType {
+    Daily,
+    Question,
+    Gathering,
+}
+
+impl From<u32> for PostType {
+    fn from(value: u32) -> Self {
+        match value {
+            1 => PostType::Daily,
+            2 => PostType::Question,
+            3 => PostType::Gathering,
+            _ => panic!("undefined post type: {}", value),
+        }
+    }
+}
+
+#[async_trait]
+impl TryFromChunks for PostType {
+    async fn try_from_chunks(
+        chunks: impl futures_util::stream::Stream<Item = Result<body::Bytes, TypedMultipartError>>
+            + Send
+            + Sync
+            + Unpin,
+        metadata: FieldMetadata,
+    ) -> Result<Self, TypedMultipartError> {
+        let value = u32::try_from_chunks(chunks, metadata).await?;
+
+        Ok(PostType::from(value))
+    }
+}
+
+#[derive(sqlx::FromRow)]
 pub(crate) struct Post {
     id: PostId,
     author_id: UserId,
+    post_type: PostType,
+    town_id: TownId,
     content: String,
     created_at: DateTime<Utc>,
 }
@@ -32,6 +73,8 @@ struct PostImage {
 impl Post {
     pub(crate) async fn create(
         author_id: UserId,
+        post_type: PostType,
+        town_id: TownId,
         content: &str,
         images: Vec<FieldData<NamedTempFile>>,
         db: &sqlx::Pool<MySql>,
@@ -39,11 +82,16 @@ impl Post {
     ) -> Result<Self> {
         let tx = db.begin().await?;
 
-        let id =
-            sqlx::query!("INSERT INTO post (author_id, content) VALUES (?, ?)", author_id, content)
-                .execute(db)
-                .await
-                .map(|row| row.last_insert_id())?;
+        let id = sqlx::query!(
+            "INSERT INTO post (author_id, post_type, town_id, content) VALUES (?, ?, ?, ?)",
+            author_id,
+            post_type,
+            town_id,
+            content
+        )
+        .execute(db)
+        .await
+        .map(|row| row.last_insert_id())?;
         let post = Self::from_id(id, db).await?;
         post.upload_images(images, db, s3).await?;
 
@@ -118,6 +166,8 @@ impl Post {
             Self,
             "SELECT id,
 author_id,
+post_type,
+town_id,
 content,
 created_at
 FROM post WHERE author_id = ?",
@@ -226,6 +276,8 @@ impl From<Post> for PostGetResult {
         Self {
             id: value.id(),
             author_id: value.author_id,
+            post_type: value.post_type,
+            town_id: value.town_id,
             content: value.content,
             created_at: value.created_at,
         }
