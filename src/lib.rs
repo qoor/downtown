@@ -59,24 +59,16 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
         .route("/post/:id", get(handler::post::get_post))
         .route("/post/:id", patch(handler::post::edit_post))
         .route("/post/:id", delete(handler::post::delete_post))
-        .route(
-            "/post/:id/comment",
-            post(handler::post::create_post_comment).route_layer(auth_layer.clone()),
-        )
-        .route(
-            "/post/:id/comment",
-            get(handler::post::get_post_comments).route_layer(auth_layer.clone()),
-        )
-        .route(
-            "/post/:id/comment/:id",
-            delete(handler::post::delete_post_comment).route_layer(auth_layer.clone()),
-        );
+        .route("/post/:id/comment", post(handler::post::create_post_comment))
+        .route("/post/:id/comment", get(handler::post::get_post_comments))
+        .route("/post/:id/comment/:id", delete(handler::post::delete_post_comment))
+        .route_layer(auth_layer.clone());
 
     axum::Router::new()
         .merge(root_routers)
         .merge(user_routers)
         .merge(post_routers)
-        .layer(DefaultBodyLimit::max(1024 * 1024 * 10))
+        .layer(DefaultBodyLimit::max(1024 * 1024 * 10)) // 10 MB
         .with_state(state)
 }
 
