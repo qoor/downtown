@@ -12,24 +12,24 @@ publish = false
 
 [dependencies]
 aws-config = "0.56.1"
-aws-sdk-s3 = "0.33.0"
+aws-sdk-s3 = "0.34.0"
 axum = { version = "0.6.20", features = ["headers"] }
 axum-extra = { version = "0.8.0", features = ["cookie"] }
-axum_typed_multipart = "0.10.0"
+axum_typed_multipart = "0.10.1"
 chrono = { version = "0.4.31", features = ["serde"] }
 dotenvy = "0.15.7"
 hyper = { version = "0.14.27", features = ["full"] }
-jsonwebtoken = { version = "8.3.0", features = ["use_pem"] }
+jsonwebtoken = { version = "9.1.0", features = ["use_pem"] }
 oauth2 = "4.4.2"
 rand = "0.8.5"
 reqwest = { version = "0.11.22", features = ["native-tls", "json"] }
-serde = { version = "1.0.189", features = ["derive"] }
+serde = { version = "1.0.190", features = ["derive"] }
 serde_json = "1.0.107"
 sqlx = { version = "0.7.2", features = ["runtime-tokio-native-tls", "mysql", "chrono"] }
-tempfile = "3.8.0"
-thiserror = "1.0.49"
+tempfile = "3.8.1"
+thiserror = "1.0.50"
 tokio = { version = "1.33.0", features = ["full"] }
-tracing = "0.1.39"
+tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 
 [dev-dependencies]
