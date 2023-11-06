@@ -77,11 +77,30 @@ struct PostImage {
 impl Post {
     pub(crate) async fn create(
         town_id: TownId,
-        data: PostCreationSchema,
+        mut data: PostCreationSchema,
         db: &sqlx::Pool<MySql>,
         s3: &S3Client,
     ) -> Result<Self> {
         let tx = db.begin().await?;
+
+        let mut age_range_id: Option<u32> = None;
+
+        match data.post_type {
+            PostType::Gathering => match data.age_range {
+                Some(description) => {
+                    age_range_id = GatheringAgeRange::from_description(&description, db)
+                        .await
+                        .map(|row| Some(row.id))?;
+                }
+                _ => {
+                    age_range_id = Some(1);
+                }
+            },
+            _ => {
+                data.capacity = None;
+                data.place = None;
+            }
+        };
 
         let id = sqlx::query!(
             "INSERT INTO post (author_id, post_type, town_id, content, age_range, capacity, place) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -89,7 +108,7 @@ impl Post {
             data.post_type,
             town_id,
             data.content,
-            data.age_range,
+            age_range_id,
             data.capacity,
             data.place
         )
@@ -324,5 +343,44 @@ FROM post WHERE author_id = ?",
         }
 
         Ok(())
+    }
+}
+
+pub(crate) struct GatheringAgeRange {
+    #[allow(dead_code)]
+    id: u32,
+    #[allow(dead_code)]
+    min_age: Option<u32>,
+    #[allow(dead_code)]
+    max_age: Option<u32>,
+    description: String,
+}
+
+impl GatheringAgeRange {
+    pub(crate) async fn from_description(
+        description: &str,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Self> {
+        Ok(sqlx::query_as!(
+            GatheringAgeRange,
+            "SELECT * FROM gathering_age_range WHERE description = ?",
+            description
+        )
+        .fetch_one(db)
+        .await?)
+    }
+
+    pub(crate) async fn from_id(id: u32, db: &sqlx::Pool<MySql>) -> Result<Self> {
+        Ok(sqlx::query_as!(GatheringAgeRange, "SELECT * FROM gathering_age_range WHERE id = ?", id)
+            .fetch_one(db)
+            .await?)
+    }
+
+    pub(crate) fn id(&self) -> u32 {
+        self.id
+    }
+
+    pub(crate) fn description(&self) -> &str {
+        &self.description
     }
 }

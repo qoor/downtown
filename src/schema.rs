@@ -7,7 +7,7 @@ use sqlx::MySql;
 use tempfile::NamedTempFile;
 
 use crate::{
-    post::{comment::CommentId, Post, PostId, PostType},
+    post::{comment::CommentId, GatheringAgeRange, Post, PostId, PostType},
     town::{Town, TownId},
     user::{
         self,
@@ -121,27 +121,12 @@ pub struct PostGetResult {
 
 impl PostGetResult {
     pub(crate) async fn from_post(post: &Post, db: &sqlx::Pool<MySql>) -> Result<Self> {
-        struct GatheringAgeRange {
-            #[allow(dead_code)]
-            id: u32,
-            #[allow(dead_code)]
-            min_age: Option<u32>,
-            #[allow(dead_code)]
-            max_age: Option<u32>,
-            description: String,
-        }
-
         let user = User::from_id(post.author_id(), db).await?;
         let age_range = match post.age_range() {
-            Some(age_range) => sqlx::query_as!(
-                GatheringAgeRange,
-                "SELECT * FROM gathering_age_range WHERE id = ?",
-                age_range
-            )
-            .fetch_one(db)
-            .await
-            .map(|data| data.description)
-            .ok(),
+            Some(age_range) => GatheringAgeRange::from_id(age_range, db)
+                .await
+                .map(|data| data.description().to_string())
+                .ok(),
             _ => None,
         };
 

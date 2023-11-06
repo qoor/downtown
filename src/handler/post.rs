@@ -25,20 +25,11 @@ use crate::{
 pub(crate) async fn create_post(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    TypedMultipart(mut payload): TypedMultipart<PostCreationSchema>,
+    TypedMultipart(payload): TypedMultipart<PostCreationSchema>,
 ) -> Result<impl IntoResponse> {
     if !user.is_verified() {
         return Err(Error::Verification);
     }
-
-    match payload.post_type {
-        PostType::Gathering => {}
-        _ => {
-            payload.age_range = None;
-            payload.capacity = None;
-            payload.place = None;
-        }
-    };
 
     let post = Post::create(user.town_id(), payload, &state.database, &state.s3).await?;
 
