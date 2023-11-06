@@ -66,10 +66,11 @@ pub(crate) struct Post {
     created_at: DateTime<Utc>,
 }
 
+#[derive(sqlx::FromRow)]
 struct PostImage {
     id: u64,
     post_id: PostId,
-    image_url: Option<String>,
+    image_url: String,
     created_at: DateTime<Utc>,
 }
 
@@ -232,6 +233,15 @@ FROM post WHERE author_id = ?",
         self.created_at
     }
 
+    pub(crate) async fn images(&self, db: &sqlx::Pool<MySql>) -> Result<Vec<String>> {
+        Ok(sqlx::query_as!(PostImage, "SELECT * FROM post_image WHERE post_id = ?", self.id)
+            .fetch_all(db)
+            .await?
+            .iter()
+            .map(|image| image.image_url.clone())
+            .collect())
+    }
+
     async fn upload_images(
         &self,
         images: Vec<FieldData<NamedTempFile>>,
@@ -286,18 +296,17 @@ FROM post WHERE author_id = ?",
         let mut deleted_ids: Vec<u64> = vec![];
 
         for image in images {
-            if let Some(url) = image.image_url {
-                let parts: Vec<&str> = url.split('/').collect();
+            let url = image.image_url;
+            let parts: Vec<&str> = url.split('/').collect();
 
-                if parts.len() < 2 {
-                    continue;
-                }
+            if parts.len() < 2 {
+                continue;
+            }
 
-                let path = parts[1];
+            let path = parts[1];
 
-                if s3.delete_file(path).await.is_ok() {
-                    deleted_ids.push(image.id);
-                }
+            if s3.delete_file(path).await.is_ok() {
+                deleted_ids.push(image.id);
             }
         }
 

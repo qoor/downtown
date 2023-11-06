@@ -109,6 +109,7 @@ pub struct PostGetResult {
     pub post_type: PostType,
     pub town_id: TownId,
     pub content: String,
+    pub images: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub age_range: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -150,6 +151,7 @@ impl PostGetResult {
             post_type: post.post_type(),
             town_id: post.town_id(),
             content: post.content().to_string(),
+            images: post.images(db).await?,
             age_range,
             capacity: post.capacity(),
             place: post.place().map(str::to_string),

@@ -28,7 +28,7 @@
         "name": "image_url",
         "type_info": {
           "type": "VarString",
-          "flags": "",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
           "char_set": 224,
           "max_size": 16384
         }
@@ -50,7 +50,7 @@
     "nullable": [
       false,
       false,
-      true,
+      false,
       false
     ]
   },
