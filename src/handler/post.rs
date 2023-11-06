@@ -32,12 +32,7 @@ pub(crate) async fn create_post(
     }
 
     match payload.post_type {
-        PostType::Gathering => {
-            if payload.age_range.is_none() || payload.capacity.is_none() || payload.place.is_none()
-            {
-                return Err(Error::InvalidRequest);
-            }
-        }
+        PostType::Gathering => {}
         _ => {
             payload.age_range = None;
             payload.capacity = None;

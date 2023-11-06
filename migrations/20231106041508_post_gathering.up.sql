@@ -17,7 +17,7 @@ INSERT INTO `gathering_age_range` (id, min_age, max_age, description) VALUES
   (6, 50, NULL, '50대');
 
 ALTER TABLE `post`
-  ADD COLUMN `age_range` int(10) unsigned AFTER `content`,
+  ADD COLUMN `age_range` int(10) unsigned DEFAULT 1 AFTER `content`,
   ADD COLUMN `capacity` int(10) unsigned AFTER `age_range`,
   ADD COLUMN `place` varchar(128) AFTER `capacity`,
   ADD CONSTRAINT `post_age_range` FOREIGN KEY (`age_range`) REFERENCES `gathering_age_range` (`id`);
