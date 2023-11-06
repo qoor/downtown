@@ -52,9 +52,9 @@ pub(crate) async fn get_post(
     State(state): State<Arc<AppState>>,
     Extension(_user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    Post::from_id(post_id, &state.database)
-        .await
-        .map(|post| Json(Into::<PostGetResult>::into(post)))
+    let post = Post::from_id(post_id, &state.database).await?;
+
+    Ok(Json(PostGetResult::from_post(&post, &state.database).await?))
 }
 
 pub(crate) async fn edit_post(

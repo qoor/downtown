@@ -11,9 +11,7 @@ use sqlx::{MySql, QueryBuilder};
 use tempfile::NamedTempFile;
 use tokio::fs;
 
-use crate::{
-    aws::S3Client, schema::PostGetResult, town::TownId, user::account::UserId, Error, Result,
-};
+use crate::{aws::S3Client, town::TownId, user::account::UserId, Error, Result};
 
 pub(crate) type PostId = u64;
 
@@ -185,6 +183,22 @@ FROM post WHERE author_id = ?",
         self.author_id
     }
 
+    pub(crate) fn post_type(&self) -> PostType {
+        self.post_type
+    }
+
+    pub(crate) fn town_id(&self) -> TownId {
+        self.town_id
+    }
+
+    pub(crate) fn content(&self) -> &str {
+        &self.content
+    }
+
+    pub(crate) fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+
     async fn upload_images(
         &self,
         images: Vec<FieldData<NamedTempFile>>,
@@ -268,18 +282,5 @@ FROM post WHERE author_id = ?",
         }
 
         Ok(())
-    }
-}
-
-impl From<Post> for PostGetResult {
-    fn from(value: Post) -> Self {
-        Self {
-            id: value.id(),
-            author_id: value.author_id,
-            post_type: value.post_type,
-            town_id: value.town_id,
-            content: value.content,
-            created_at: value.created_at,
-        }
     }
 }

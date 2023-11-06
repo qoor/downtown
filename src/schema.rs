@@ -3,12 +3,18 @@
 use axum_typed_multipart::{FieldData, TryFromMultipart};
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
+use sqlx::MySql;
 use tempfile::NamedTempFile;
 
 use crate::{
-    post::{comment::CommentId, PostId, PostType},
+    post::{comment::CommentId, Post, PostId, PostType},
     town::{Town, TownId},
-    user::{self, account::UserId, IdVerificationType},
+    user::{
+        self,
+        account::{User, UserId},
+        IdVerificationType,
+    },
+    Result,
 };
 
 #[derive(TryFromMultipart)]
@@ -77,13 +83,45 @@ pub struct PostCreationSchema {
 }
 
 #[derive(Serialize)]
+pub struct PostAuthor {
+    pub id: UserId,
+    pub name: String,
+    pub picture: String,
+}
+
+impl From<User> for PostAuthor {
+    fn from(value: User) -> Self {
+        Self {
+            id: value.id(),
+            name: value.name().to_string(),
+            picture: value.picture().to_string(),
+        }
+    }
+}
+
+#[derive(Serialize)]
 pub struct PostGetResult {
     pub id: PostId,
-    pub author_id: UserId,
+    pub author: PostAuthor,
     pub post_type: PostType,
     pub town_id: TownId,
     pub content: String,
     pub created_at: DateTime<Utc>,
+}
+
+impl PostGetResult {
+    pub(crate) async fn from_post(post: &Post, db: &sqlx::Pool<MySql>) -> Result<Self> {
+        let user = User::from_id(post.author_id(), db).await?;
+
+        Ok(Self {
+            id: post.id(),
+            author: user.into(),
+            post_type: post.post_type(),
+            town_id: post.town_id(),
+            content: post.content().to_string(),
+            created_at: post.created_at(),
+        })
+    }
 }
 
 #[derive(TryFromMultipart)]

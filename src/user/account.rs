@@ -227,6 +227,14 @@ FROM user WHERE phone = ?",
     pub(crate) fn town_id(&self) -> TownId {
         self.town_id
     }
+
+    pub(crate) fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub(crate) fn picture(&self) -> &str {
+        &self.picture
+    }
 }
 
 struct PicturePath {
