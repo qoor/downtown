@@ -257,7 +257,7 @@ FROM user WHERE phone = ?",
         photo
             .contents
             .persist(&temp_path)
-            .map_err(|err| Error::PersistFile { path: temp_path.clone(), source: err.into() });
+            .map_err(|err| Error::PersistFile { path: temp_path.clone(), source: err.into() })?;
 
         s3.push_file(&temp_path, &(String::from(VERIFICATION_PHOTO_PATH) + &basename)).await
     }

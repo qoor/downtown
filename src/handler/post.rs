@@ -13,7 +13,7 @@ use serde::Serialize;
 use crate::{
     post::{
         comment::{Comment, CommentId},
-        Post, PostId,
+        Post, PostId, PostType,
     },
     schema::{
         CommentCreationSchema, PostCreationSchema, PostEditSchema, PostGetResult, PostResultSchema,
@@ -25,24 +25,27 @@ use crate::{
 pub(crate) async fn create_post(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    TypedMultipart(PostCreationSchema { author_id, post_type, content, images }): TypedMultipart<
-        PostCreationSchema,
-    >,
+    TypedMultipart(mut payload): TypedMultipart<PostCreationSchema>,
 ) -> Result<impl IntoResponse> {
     if !user.is_verified() {
         return Err(Error::Verification);
     }
 
-    let post = Post::create(
-        author_id,
-        post_type,
-        user.town_id(),
-        &content,
-        images,
-        &state.database,
-        &state.s3,
-    )
-    .await?;
+    match payload.post_type {
+        PostType::Gathering => {
+            if payload.age_range.is_none() || payload.capacity.is_none() || payload.place.is_none()
+            {
+                return Err(Error::InvalidRequest);
+            }
+        }
+        _ => {
+            payload.age_range = None;
+            payload.capacity = None;
+            payload.place = None;
+        }
+    };
+
+    let post = Post::create(user.town_id(), payload, &state.database, &state.s3).await?;
 
     Ok(Json(PostResultSchema { post_id: post.id(), author_id: post.author_id() }))
 }

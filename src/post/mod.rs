@@ -11,7 +11,9 @@ use sqlx::{MySql, QueryBuilder};
 use tempfile::NamedTempFile;
 use tokio::fs;
 
-use crate::{aws::S3Client, town::TownId, user::account::UserId, Error, Result};
+use crate::{
+    aws::S3Client, schema::PostCreationSchema, town::TownId, user::account::UserId, Error, Result,
+};
 
 pub(crate) type PostId = u64;
 
@@ -58,6 +60,9 @@ pub(crate) struct Post {
     post_type: PostType,
     town_id: TownId,
     content: String,
+    age_range: Option<u32>,
+    capacity: Option<u32>,
+    place: Option<String>,
     created_at: DateTime<Utc>,
 }
 
@@ -70,28 +75,28 @@ struct PostImage {
 
 impl Post {
     pub(crate) async fn create(
-        author_id: UserId,
-        post_type: PostType,
         town_id: TownId,
-        content: &str,
-        images: Vec<FieldData<NamedTempFile>>,
+        data: PostCreationSchema,
         db: &sqlx::Pool<MySql>,
         s3: &S3Client,
     ) -> Result<Self> {
         let tx = db.begin().await?;
 
         let id = sqlx::query!(
-            "INSERT INTO post (author_id, post_type, town_id, content) VALUES (?, ?, ?, ?)",
-            author_id,
-            post_type,
+            "INSERT INTO post (author_id, post_type, town_id, content, age_range, capacity, place) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            data.author_id,
+            data.post_type,
             town_id,
-            content
+            data.content,
+            data.age_range,
+            data.capacity,
+            data.place
         )
         .execute(db)
         .await
         .map(|row| row.last_insert_id())?;
         let post = Self::from_id(id, db).await?;
-        post.upload_images(images, db, s3).await?;
+        post.upload_images(data.images, db, s3).await?;
 
         tx.commit().await?;
 
@@ -151,12 +156,25 @@ impl Post {
     }
 
     pub(crate) async fn from_id(id: u64, db: &sqlx::Pool<MySql>) -> Result<Self> {
-        sqlx::query_as!(Self, "SELECT * FROM post WHERE id = ?", id).fetch_one(db).await.map_err(
-            |err| match err {
-                sqlx::Error::RowNotFound => Error::PostNotFound(id),
-                _ => Error::Database(err),
-            },
+        sqlx::query_as!(
+            Self,
+            "SELECT id,
+author_id,
+post_type,
+town_id,
+content,
+age_range,
+capacity,
+place,
+created_at FROM post WHERE id = ?",
+            id
         )
+        .fetch_one(db)
+        .await
+        .map_err(|err| match err {
+            sqlx::Error::RowNotFound => Error::PostNotFound(id),
+            _ => Error::Database(err),
+        })
     }
 
     pub(crate) async fn from_user_id(user_id: UserId, db: &sqlx::Pool<MySql>) -> Result<Vec<Self>> {
@@ -167,6 +185,9 @@ author_id,
 post_type,
 town_id,
 content,
+age_range,
+capacity,
+place,
 created_at
 FROM post WHERE author_id = ?",
             user_id
@@ -193,6 +214,18 @@ FROM post WHERE author_id = ?",
 
     pub(crate) fn content(&self) -> &str {
         &self.content
+    }
+
+    pub(crate) fn age_range(&self) -> Option<u32> {
+        self.age_range
+    }
+
+    pub(crate) fn capacity(&self) -> Option<u32> {
+        self.capacity
+    }
+
+    pub(crate) fn place(&self) -> Option<&str> {
+        self.place.as_deref()
     }
 
     pub(crate) fn created_at(&self) -> DateTime<Utc> {

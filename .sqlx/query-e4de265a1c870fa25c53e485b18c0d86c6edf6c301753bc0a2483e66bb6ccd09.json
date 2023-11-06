@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT id,\nauthor_id,\npost_type,\ntown_id,\ncontent,\ncreated_at\nFROM post WHERE author_id = ?",
+  "query": "SELECT id,\nauthor_id,\npost_type,\ntown_id,\ncontent,\nage_range,\ncapacity,\nplace,\ncreated_at FROM post WHERE id = ?",
   "describe": {
     "columns": [
       {
@@ -55,6 +55,36 @@
       },
       {
         "ordinal": 5,
+        "name": "age_range",
+        "type_info": {
+          "type": "Long",
+          "flags": "MULTIPLE_KEY | UNSIGNED",
+          "char_set": 63,
+          "max_size": 10
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "capacity",
+        "type_info": {
+          "type": "Long",
+          "flags": "UNSIGNED",
+          "char_set": 63,
+          "max_size": 10
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "place",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "char_set": 224,
+          "max_size": 512
+        }
+      },
+      {
+        "ordinal": 8,
         "name": "created_at",
         "type_info": {
           "type": "Timestamp",
@@ -73,8 +103,11 @@
       false,
       false,
       false,
+      true,
+      true,
+      true,
       false
     ]
   },
-  "hash": "f26fe8939e479ffe5aec5b1fddc1e41e3b3eb5b349ffb71df85e76643f446881"
+  "hash": "e4de265a1c870fa25c53e485b18c0d86c6edf6c301753bc0a2483e66bb6ccd09"
 }

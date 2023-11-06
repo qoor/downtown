@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO post (author_id, post_type, town_id, content, age_range, capacity, place) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "2c0f8aa9e6214ddf2b4167926f3c40972a43dd6d2730bc99383e8f3a35385578"
+}
