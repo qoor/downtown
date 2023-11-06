@@ -22,9 +22,9 @@ const POST_IMAGE_PATH: &str = "post_image/";
 #[derive(Clone, Copy, sqlx::Type, Serialize)]
 #[repr(u32)]
 pub enum PostType {
-    Daily,
-    Question,
-    Gathering,
+    Daily = 1,
+    Question = 2,
+    Gathering = 3,
 }
 
 impl From<u32> for PostType {
