@@ -1,9 +1,10 @@
 // Copyright 2023. The downtown authors all rights reserved.
 
-use std::path::PathBuf;
+use std::{fs::File, path::PathBuf};
 
 use axum_typed_multipart::FieldData;
 use chrono::{DateTime, NaiveDate, Utc};
+use rand::{distributions::Alphanumeric, Rng};
 use sqlx::MySql;
 use tempfile::NamedTempFile;
 use tokio::{fs, io};
@@ -18,6 +19,8 @@ use crate::{
 use super::{IdVerificationType, Sex};
 
 pub(crate) type UserId = u64;
+
+const VERIFICATION_PHOTO_PATH: &str = "verification_photo/";
 
 #[derive(Debug, sqlx::FromRow, Clone)]
 pub(crate) struct User {
@@ -39,12 +42,15 @@ pub(crate) struct User {
 
 impl User {
     pub(crate) async fn register(
-        data: &RegistrationSchema,
+        data: RegistrationSchema,
         db: &sqlx::Pool<MySql>,
+        s3: &aws::S3Client,
     ) -> Result<Self> {
         let tx = db.begin().await?;
 
         let town_id = Town::from_address(&data.address, db).await.map(|town| town.id())?;
+        let verification_photo_url =
+            Self::upload_verification_photo(data.verification_photo, s3).await?;
 
         let user_id = sqlx::query!(
             "INSERT INTO user (
@@ -69,17 +75,17 @@ verification_photo_url) VALUES (
             data.sex,
             town_id,
             data.verification_type,
-            ""
+            verification_photo_url
         )
         .execute(db)
         .await
         .map(|row| row.last_insert_id())?;
 
-        let user = Self::from_id(user_id, db).await;
+        let user = Self::from_id(user_id, db).await?;
 
         tx.commit().await?;
 
-        user
+        Ok(user)
     }
 
     pub(crate) async fn from_id(id: UserId, db: &sqlx::Pool<MySql>) -> Result<Self> {
@@ -234,6 +240,26 @@ FROM user WHERE phone = ?",
 
     pub(crate) fn picture(&self) -> &str {
         &self.picture
+    }
+
+    async fn upload_verification_photo(
+        photo: FieldData<NamedTempFile<File>>,
+        s3: &aws::S3Client,
+    ) -> Result<String> {
+        let basename: String =
+            rand::thread_rng().sample_iter(Alphanumeric).take(32).map(char::from).collect();
+        let dir = std::env::temp_dir().join(std::env!("CARGO_PKG_NAME"));
+        let temp_path = dir.join(&basename);
+
+        fs::create_dir_all(&dir)
+            .await
+            .map_err(|err| Error::Io { path: dir.to_path_buf(), source: err })?;
+        photo
+            .contents
+            .persist(&temp_path)
+            .map_err(|err| Error::PersistFile { path: temp_path.clone(), source: err.into() });
+
+        s3.push_file(&temp_path, &(String::from(VERIFICATION_PHOTO_PATH) + &basename)).await
     }
 }
 

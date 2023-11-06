@@ -30,11 +30,14 @@ pub async fn create_user(
     State(state): State<Arc<AppState>>,
     TypedMultipart(payload): TypedMultipart<RegistrationSchema>,
 ) -> Result<impl IntoResponse> {
-    PhoneVerification::verify(&payload.phone, &payload.authorization_code, &state.database).await?;
+    let phone = payload.phone.clone();
+    let authorization_code = payload.authorization_code.clone();
 
-    let user = User::register(&payload, &state.database).await?;
+    PhoneVerification::verify(&phone, &authorization_code, &state.database).await?;
 
-    PhoneVerification::cancel(&payload.phone, &state.database).await?;
+    let user = User::register(payload, &state.database, &state.s3).await?;
+
+    PhoneVerification::cancel(&phone, &state.database).await?;
 
     Ok(Json(create_jwt_token_pairs(&user, &state).await?))
 }
