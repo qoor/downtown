@@ -6,7 +6,7 @@ use axum::{async_trait, body};
 use axum_typed_multipart::{FieldData, FieldMetadata, TryFromChunks, TypedMultipartError};
 use chrono::{DateTime, Utc};
 use rand::{distributions::Alphanumeric, Rng};
-use serde::Serialize;
+use serde_repr::Serialize_repr;
 use sqlx::{MySql, QueryBuilder};
 use tempfile::NamedTempFile;
 use tokio::fs;
@@ -17,7 +17,7 @@ pub(crate) type PostId = u64;
 
 const POST_IMAGE_PATH: &str = "post_image/";
 
-#[derive(Clone, Copy, sqlx::Type, Serialize)]
+#[derive(Clone, Copy, sqlx::Type, Serialize_repr)]
 #[repr(u32)]
 pub enum PostType {
     Daily = 1,
