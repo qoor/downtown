@@ -2,7 +2,7 @@
 
 use axum_typed_multipart::{FieldData, TryFromMultipart};
 use chrono::{DateTime, NaiveDate, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::MySql;
 use tempfile::NamedTempFile;
 
@@ -162,4 +162,10 @@ pub struct PostResultSchema {
 pub struct CommentCreationSchema {
     pub content: String,
     pub parent_comment_id: Option<CommentId>,
+}
+
+#[derive(Deserialize)]
+pub struct PostListSchema {
+    pub last_id: Option<PostId>,
+    pub limit: Option<i32>,
 }

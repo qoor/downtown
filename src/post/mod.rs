@@ -216,6 +216,32 @@ FROM post WHERE author_id = ?",
         .await?)
     }
 
+    pub(crate) async fn get(
+        town_id: TownId,
+        last_id: PostId,
+        limit: i32,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Vec<Self>> {
+        Ok(sqlx::query_as!(
+            Self,
+            "SELECT id,
+author_id,
+post_type,
+town_id,
+content,
+age_range,
+capacity,
+place,
+created_at
+FROM post WHERE id < ? AND town_id = ? ORDER BY id DESC LIMIT ?",
+            last_id,
+            town_id,
+            limit
+        )
+        .fetch_all(db)
+        .await?)
+    }
+
     pub(crate) fn id(&self) -> PostId {
         self.id
     }

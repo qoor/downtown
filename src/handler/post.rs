@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     response::IntoResponse,
     Extension, Json,
 };
@@ -16,7 +16,8 @@ use crate::{
         Post, PostId,
     },
     schema::{
-        CommentCreationSchema, PostCreationSchema, PostEditSchema, PostGetResult, PostResultSchema,
+        CommentCreationSchema, PostCreationSchema, PostEditSchema, PostGetResult, PostListSchema,
+        PostResultSchema,
     },
     user::account::{User, UserId},
     AppState, Error, Result,
@@ -125,4 +126,30 @@ pub(crate) async fn delete_post_comment(
 
         Json(CommentDeletionResult { id: comment_id, post_id, author_id: user.id() })
     })
+}
+
+pub(crate) async fn get_post_list(
+    params: Query<PostListSchema>,
+    State(state): State<Arc<AppState>>,
+    user: Extension<User>,
+) -> Result<impl IntoResponse> {
+    let mut last_id = PostId::MAX;
+    let mut limit = 10;
+
+    if let Some(request_last_id) = params.last_id {
+        last_id = request_last_id;
+    }
+    if let Some(request_limit) = params.limit {
+        limit = request_limit;
+    }
+
+    let posts = Post::get(user.town_id(), last_id, limit, &state.database).await?;
+
+    let mut response: Vec<PostGetResult> = vec![];
+    response.reserve(posts.len());
+    for post in posts {
+        response.push(PostGetResult::from_post(&post, &state.database).await?);
+    }
+
+    Ok(Json(response))
 }
