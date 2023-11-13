@@ -59,11 +59,7 @@ pub(crate) async fn refresh_verification(
 
     user.verify_refresh_token(refresh_token)?;
 
-    let tokens = create_jwt_token_pairs(&user, &state).await?;
-
-    user.update_refresh_token(&tokens.refresh_token, &state.database).await?;
-
-    Ok(Json(tokens))
+    Ok(Json(create_jwt_token_pairs(&user, &state).await?))
 }
 
 pub async fn setup_phone_verification(
@@ -89,11 +85,7 @@ pub async fn verify_phone(
 
     PhoneVerification::cancel(&phone, &state.database).await?;
 
-    let tokens = create_jwt_token_pairs(&user, &state).await?;
-
-    user.update_refresh_token(&tokens.refresh_token, &state.database).await?;
-
-    Ok(Json(tokens))
+    Ok(Json(create_jwt_token_pairs(&user, &state).await?))
 }
 
 pub(crate) async fn update_profile_picture(
