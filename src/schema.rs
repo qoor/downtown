@@ -135,6 +135,7 @@ pub struct PostGetResult {
     pub place: Option<String>,
     pub total_likes: i64,
     pub my_like: bool,
+    pub total_comments: i64,
     pub created_at: DateTime<Utc>,
 }
 
@@ -169,6 +170,7 @@ impl PostGetResult {
             place: post.place().map(str::to_string),
             total_likes: post.total_likes(),
             my_like,
+            total_comments: post.total_comments(),
             created_at: post.created_at(),
         })
     }

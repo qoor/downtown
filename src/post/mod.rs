@@ -64,6 +64,7 @@ pub(crate) struct Post {
     capacity: Option<u32>,
     place: Option<String>,
     total_likes: i64,
+    total_comments: i64,
     created_at: DateTime<Utc>,
 }
 
@@ -188,6 +189,7 @@ age_range,
 capacity,
 place,
 (SELECT COUNT(*) FROM post_like as pl WHERE pl.id = p.id) as `total_likes!`,
+(SELECT COUNT(*) FROM post_comment as pc WHERE pc.id = p.id) as `total_comments!`,
 created_at FROM post as p WHERE id = ?",
             id
         )
@@ -211,6 +213,7 @@ age_range,
 capacity,
 place,
 (SELECT COUNT(*) FROM post_like as pl WHERE pl.id = p.id) as `total_likes!`,
+(SELECT COUNT(*) FROM post_comment as pc WHERE pc.id = p.id) as `total_comments!`,
 created_at
 FROM post as p WHERE author_id = ?",
             user_id
@@ -236,6 +239,7 @@ age_range,
 capacity,
 place,
 (SELECT COUNT(*) FROM post_like as pl WHERE pl.id = p.id) as `total_likes!`,
+(SELECT COUNT(*) FROM post_comment as pc WHERE pc.id = p.id) as `total_comments!`,
 created_at
 FROM post as p WHERE id < ? AND town_id = ? ORDER BY id DESC LIMIT ?",
             last_id,
@@ -280,6 +284,10 @@ FROM post as p WHERE id < ? AND town_id = ? ORDER BY id DESC LIMIT ?",
 
     pub(crate) fn total_likes(&self) -> i64 {
         self.total_likes
+    }
+
+    pub(crate) fn total_comments(&self) -> i64 {
+        self.total_comments
     }
 
     pub(crate) fn created_at(&self) -> DateTime<Utc> {
