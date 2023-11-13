@@ -198,6 +198,8 @@ pub(crate) async fn get_user_posts(
     let posts =
         Post::from_user(&target_user, params.last_id(), params.limit(), &state.database).await?;
 
+    println!("last_id = {}, limit = {}", params.last_id(), params.limit());
+
     Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
 }
 
