@@ -68,7 +68,7 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
         .merge(root_routers)
         .merge(user_routers)
         .merge(post_routers)
-        .layer(DefaultBodyLimit::max(1024 * 1024 * 10)) // 10 MB
+        .layer(DefaultBodyLimit::max(1024 * 1024 * 50)) // 10 MB
         .with_state(state)
 }
 
