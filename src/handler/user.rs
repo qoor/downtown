@@ -46,13 +46,13 @@ pub async fn create_user(
 
 pub(crate) async fn get_other_user_info(
     Path(target_id): Path<UserId>,
-    Extension(_user): Extension<User>,
+    Extension(user): Extension<User>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse> {
     Ok(Json(
         User::from_id(target_id, &state.database)
             .await?
-            .to_other_user_schema(&state.database)
+            .to_other_user_schema(&user, &state.database)
             .await?,
     ))
 }

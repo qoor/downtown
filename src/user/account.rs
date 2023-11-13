@@ -172,13 +172,18 @@ FROM user as u WHERE phone = ?",
 
     pub(crate) async fn to_other_user_schema(
         &self,
+        requester: &User,
         db: &sqlx::Pool<MySql>,
     ) -> Result<OtherUserSchema> {
         let town = Town::from_id(self.town_id, db).await?;
-        let my_like = sqlx::query!("SELECT id FROM user_like WHERE issuer_id = ?", self.id)
-            .fetch_optional(db)
-            .await?
-            .is_some();
+        let my_like = sqlx::query!(
+            "SELECT id FROM user_like WHERE issuer_id = ? AND target_id = ? LIMIT 1",
+            requester.id,
+            self.id
+        )
+        .fetch_optional(db)
+        .await?
+        .is_some();
 
         Ok(OtherUserSchema {
             id: self.id,
