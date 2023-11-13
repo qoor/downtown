@@ -195,13 +195,8 @@ pub(crate) async fn get_user_posts(
     let target_user = User::from_id(target_id, &state.database).await?;
 
     let posts = Post::from_user_id(target_user.id(), &state.database).await?;
-    let mut response: Vec<PostGetResult> = vec![];
-    response.reserve(posts.len());
-    for post in posts {
-        response.push(PostGetResult::from_post(&post, &state.database).await?);
-    }
 
-    Ok(Json(response))
+    Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
 }
 
 async fn create_jwt_token_pairs(user: &User, state: &Arc<AppState>) -> Result<TokenSchema> {
