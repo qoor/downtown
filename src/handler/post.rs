@@ -13,7 +13,7 @@ use serde::Serialize;
 use crate::{
     post::{
         comment::{Comment, CommentId},
-        Post, PostId, PostType,
+        Post, PostId,
     },
     schema::{
         CommentCreationSchema, PostCreationSchema, PostEditSchema, PostGetResult, PostResultSchema,
@@ -27,10 +27,6 @@ pub(crate) async fn create_post(
     Extension(user): Extension<User>,
     TypedMultipart(payload): TypedMultipart<PostCreationSchema>,
 ) -> Result<impl IntoResponse> {
-    if !user.is_verified() {
-        return Err(Error::Verification);
-    }
-
     let post = Post::create(user.town_id(), payload, &state.database, &state.s3).await?;
 
     Ok(Json(PostResultSchema { post_id: post.id(), author_id: post.author_id() }))
