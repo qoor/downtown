@@ -42,6 +42,7 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
     let root_routers = axum::Router::new().route("/", get(handler::root));
     let user_routers = axum::Router::new()
         .route("/user", post(handler::user::create_user))
+        .route("/user/:id", get(handler::user::get_other_user_info).route_layer(auth_layer.clone()))
         .route("/user/me", get(handler::user::get_user_info).route_layer(auth_layer.clone()))
         .route(
             "/user/me/picture",
@@ -50,6 +51,22 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
         .route(
             "/user/me/bio",
             patch(handler::user::update_profile_bio).route_layer(auth_layer.clone()),
+        )
+        .route(
+            "/user/me/like/user/:id",
+            post(handler::user::like_user).route_layer(auth_layer.clone()),
+        )
+        .route(
+            "/user/me/like/user/:id",
+            delete(handler::user::cancel_like_user).route_layer(auth_layer.clone()),
+        )
+        .route(
+            "/user/me/like/post/:id",
+            post(handler::user::like_post).route_layer(auth_layer.clone()),
+        )
+        .route(
+            "/user/me/like/post/:id",
+            delete(handler::user::cancel_like_post).route_layer(auth_layer.clone()),
         )
         .route("/user/verification", patch(handler::user::refresh_verification))
         .route("/user/verification/phone", post(handler::user::setup_phone_verification))

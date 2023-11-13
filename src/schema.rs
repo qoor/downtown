@@ -49,10 +49,27 @@ pub struct UserSchema {
     pub birthdate: NaiveDate,
     pub sex: String,
     pub town: Town,
+    pub verified: bool,
     pub verification_type: String,
     pub verification_photo_url: String,
     pub picture: String,
     pub bio: String,
+    pub total_likes: i64,
+}
+
+#[derive(Serialize)]
+pub struct OtherUserSchema {
+    pub id: UserId,
+    pub name: String,
+    pub phone: String,
+    pub birthdate: NaiveDate,
+    pub sex: String,
+    pub town: Town,
+    pub verified: bool,
+    pub picture: String,
+    pub bio: String,
+    pub total_likes: i64,
+    pub my_like: bool,
 }
 
 #[derive(Serialize)]
@@ -116,6 +133,8 @@ pub struct PostGetResult {
     pub capacity: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub place: Option<String>,
+    pub total_likes: i64,
+    pub my_like: bool,
     pub created_at: DateTime<Utc>,
 }
 
@@ -129,6 +148,14 @@ impl PostGetResult {
                 .ok(),
             _ => None,
         };
+        let my_like = sqlx::query!(
+            "SELECT id FROM post_like WHERE user_id = ? AND post_id = ? LIMIT 1",
+            user.id(),
+            post.id()
+        )
+        .fetch_optional(db)
+        .await?
+        .is_some();
 
         Ok(Self {
             id: post.id(),
@@ -140,6 +167,8 @@ impl PostGetResult {
             age_range,
             capacity: post.capacity(),
             place: post.place().map(str::to_string),
+            total_likes: post.total_likes(),
+            my_like,
             created_at: post.created_at(),
         })
     }
@@ -168,4 +197,16 @@ pub struct CommentCreationSchema {
 pub struct PostListSchema {
     pub last_id: Option<PostId>,
     pub limit: Option<i32>,
+}
+
+#[derive(Serialize)]
+pub struct UserLikeResult {
+    pub issuer_id: UserId,
+    pub target_id: UserId,
+}
+
+#[derive(Serialize)]
+pub struct PostLikeResult {
+    pub user_id: UserId,
+    pub post_id: UserId,
 }

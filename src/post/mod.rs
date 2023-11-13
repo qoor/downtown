@@ -63,6 +63,7 @@ pub(crate) struct Post {
     age_range: Option<u32>,
     capacity: Option<u32>,
     place: Option<String>,
+    total_likes: i64,
     created_at: DateTime<Utc>,
 }
 
@@ -186,7 +187,8 @@ content,
 age_range,
 capacity,
 place,
-created_at FROM post WHERE id = ?",
+(SELECT COUNT(*) FROM post_like as pl WHERE pl.id = p.id) as `total_likes!`,
+created_at FROM post as p WHERE id = ?",
             id
         )
         .fetch_one(db)
@@ -208,8 +210,9 @@ content,
 age_range,
 capacity,
 place,
+(SELECT COUNT(*) FROM post_like as pl WHERE pl.id = p.id) as `total_likes!`,
 created_at
-FROM post WHERE author_id = ?",
+FROM post as p WHERE author_id = ?",
             user_id
         )
         .fetch_all(db)
@@ -232,8 +235,9 @@ content,
 age_range,
 capacity,
 place,
+(SELECT COUNT(*) FROM post_like as pl WHERE pl.id = p.id) as `total_likes!`,
 created_at
-FROM post WHERE id < ? AND town_id = ? ORDER BY id DESC LIMIT ?",
+FROM post as p WHERE id < ? AND town_id = ? ORDER BY id DESC LIMIT ?",
             last_id,
             town_id,
             limit
@@ -272,6 +276,10 @@ FROM post WHERE id < ? AND town_id = ? ORDER BY id DESC LIMIT ?",
 
     pub(crate) fn place(&self) -> Option<&str> {
         self.place.as_deref()
+    }
+
+    pub(crate) fn total_likes(&self) -> i64 {
+        self.total_likes
     }
 
     pub(crate) fn created_at(&self) -> DateTime<Utc> {

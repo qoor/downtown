@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM post_like WHERE user_id = ? AND post_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "012b6bb9c7762cee14e177f3c2b035d04515cada77df5e7df07a77783fb90924"
+}

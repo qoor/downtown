@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO user_like (issuer_id, target_id) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "499896e82143fff7987e18a79cfd2a0dc2ac735b8a01ff4a19257d63cbc46d12"
+}

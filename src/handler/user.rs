@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::State,
+    extract::{Path, State},
     headers::{authorization::Bearer, Authorization},
     response::IntoResponse,
     Extension, Json, TypedHeader,
@@ -14,9 +14,11 @@ use hyper::StatusCode;
 use serde::Serialize;
 
 use crate::{
+    post::{Post, PostId},
     schema::{
-        PhoneVerificationSchema, PhoneVerificationSetupSchema, ProfileBioUpdateSchema,
-        ProfilePictureUpdateSchema, RegistrationSchema, TokenSchema,
+        PhoneVerificationSchema, PhoneVerificationSetupSchema, PostLikeResult,
+        ProfileBioUpdateSchema, ProfilePictureUpdateSchema, RegistrationSchema, TokenSchema,
+        UserLikeResult,
     },
     user::{
         account::{User, UserId},
@@ -40,6 +42,19 @@ pub async fn create_user(
     PhoneVerification::cancel(&phone, &state.database).await?;
 
     Ok(Json(create_jwt_token_pairs(&user, &state).await?))
+}
+
+pub(crate) async fn get_other_user_info(
+    Path(target_id): Path<UserId>,
+    Extension(_user): Extension<User>,
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse> {
+    Ok(Json(
+        User::from_id(target_id, &state.database)
+            .await?
+            .to_other_user_schema(&state.database)
+            .await?,
+    ))
 }
 
 pub(crate) async fn get_user_info(
@@ -120,6 +135,47 @@ pub(crate) async fn update_profile_bio(
     }
 
     Ok(Json(BioUpdateResult { id: user.id(), bio }))
+}
+
+pub(crate) async fn like_user(
+    Path(target_id): Path<UserId>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    user.like_user(&User::from_id(target_id, &state.database).await?, &state.database).await?;
+
+    Ok(Json(UserLikeResult { issuer_id: user.id(), target_id }))
+}
+
+pub(crate) async fn cancel_like_user(
+    Path(target_id): Path<UserId>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    user.cancel_like_user(&User::from_id(target_id, &state.database).await?, &state.database)
+        .await?;
+
+    Ok(Json(UserLikeResult { issuer_id: user.id(), target_id }))
+}
+
+pub(crate) async fn like_post(
+    Path(post_id): Path<PostId>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    user.like_post(&Post::from_id(post_id, &state.database).await?, &state.database).await?;
+
+    Ok(Json(PostLikeResult { user_id: user.id(), post_id }))
+}
+
+pub(crate) async fn cancel_like_post(
+    Path(post_id): Path<UserId>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    user.cancel_like_post(&Post::from_id(post_id, &state.database).await?, &state.database).await?;
+
+    Ok(Json(PostLikeResult { user_id: user.id(), post_id }))
 }
 
 async fn create_jwt_token_pairs(user: &User, state: &Arc<AppState>) -> Result<TokenSchema> {

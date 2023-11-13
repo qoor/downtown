@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM user_like WHERE issuer_id = ? AND target_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c16b2cf0cf4be24d4f650d689cd6d0b5abd2904ceed5a09b27de51eff17443f7"
+}

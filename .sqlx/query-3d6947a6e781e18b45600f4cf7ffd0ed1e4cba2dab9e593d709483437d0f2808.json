@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO post_like (user_id, post_id) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "3d6947a6e781e18b45600f4cf7ffd0ed1e4cba2dab9e593d709483437d0f2808"
+}

@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT\nid,\nname,\nphone,\nbirthdate,\nsex as `sex: Sex`,\ntown_id,\nverified as `verified: bool`,\nverification_type as `verification_type: IdVerificationType`,\nverification_photo_url,\npicture,\nbio,\nrefresh_token,\ncreated_at,\nupdated_at\nFROM user WHERE id = ?",
+  "query": "SELECT\nid,\nname,\nphone,\nbirthdate,\nsex as `sex: Sex`,\ntown_id,\nverified as `verified: bool`,\nverification_type as `verification_type: IdVerificationType`,\nverification_photo_url,\npicture,\nbio,\nrefresh_token,\n(SELECT COUNT(*) FROM user_like as ul WHERE ul.id = u.id) as `total_likes!`,\ncreated_at,\nupdated_at\nFROM user as u WHERE phone = ?",
   "describe": {
     "columns": [
       {
@@ -125,6 +125,16 @@
       },
       {
         "ordinal": 12,
+        "name": "total_likes!",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "BINARY",
+          "char_set": 63,
+          "max_size": 21
+        }
+      },
+      {
+        "ordinal": 13,
         "name": "created_at",
         "type_info": {
           "type": "Timestamp",
@@ -134,7 +144,7 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "updated_at",
         "type_info": {
           "type": "Timestamp",
@@ -160,9 +170,10 @@
       false,
       true,
       true,
+      true,
       false,
       false
     ]
   },
-  "hash": "9b87532742e9b37cfb1b3c3b3fd637d022704248493ca845f5b0bb099eb3fc27"
+  "hash": "8945bff9ef9f2c6ad46d71e096b0faa26a1a13277cc2f90732994b9cbf2d5084"
 }

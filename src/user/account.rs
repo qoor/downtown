@@ -12,7 +12,8 @@ use tracing::error;
 
 use crate::{
     aws,
-    schema::{RegistrationSchema, UserSchema},
+    post::Post,
+    schema::{OtherUserSchema, RegistrationSchema, UserSchema},
     town::{Town, TownId},
     Error, Result,
 };
@@ -37,6 +38,7 @@ pub(crate) struct User {
     picture: String,
     bio: Option<String>,
     refresh_token: Option<String>,
+    total_likes: i64,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -105,9 +107,10 @@ verification_photo_url,
 picture,
 bio,
 refresh_token,
+(SELECT COUNT(*) FROM user_like as ul WHERE ul.id = u.id) as `total_likes!`,
 created_at,
 updated_at
-FROM user WHERE id = ?",
+FROM user as u WHERE u.id = ?",
             id
         )
         .fetch_one(db)
@@ -134,9 +137,10 @@ verification_photo_url,
 picture,
 bio,
 refresh_token,
+(SELECT COUNT(*) FROM user_like as ul WHERE ul.id = u.id) as `total_likes!`,
 created_at,
 updated_at
-FROM user WHERE phone = ?",
+FROM user as u WHERE phone = ?",
             phone
         )
         .fetch_one(db)
@@ -157,10 +161,37 @@ FROM user WHERE phone = ?",
             birthdate: self.birthdate,
             sex: self.sex.to_string(),
             town,
+            verified: self.verified,
             verification_type: self.verification_type.to_string(),
             verification_photo_url: self.verification_photo_url.to_string(),
             picture: self.picture.clone(),
             bio: self.bio.clone().unwrap_or_default(),
+            total_likes: self.total_likes,
+        })
+    }
+
+    pub(crate) async fn to_other_user_schema(
+        &self,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<OtherUserSchema> {
+        let town = Town::from_id(self.town_id, db).await?;
+        let my_like = sqlx::query!("SELECT id FROM user_like WHERE issuer_id = ?", self.id)
+            .fetch_optional(db)
+            .await?
+            .is_some();
+
+        Ok(OtherUserSchema {
+            id: self.id,
+            name: self.name.clone(),
+            phone: self.phone.clone(),
+            birthdate: self.birthdate,
+            sex: self.sex.to_string(),
+            town,
+            verified: self.verified,
+            picture: self.picture.clone(),
+            bio: self.bio.clone().unwrap_or_default(),
+            total_likes: self.total_likes,
+            my_like,
         })
     }
 
@@ -229,6 +260,46 @@ FROM user WHERE phone = ?",
         Ok(picture_url)
     }
 
+    pub(crate) async fn like_user(&self, target: &User, db: &sqlx::Pool<MySql>) -> Result<()> {
+        sqlx::query!(
+            "INSERT INTO user_like (issuer_id, target_id) VALUES (?, ?)",
+            self.id,
+            target.id
+        )
+        .execute(db)
+        .await?;
+        Ok(())
+    }
+
+    pub(crate) async fn like_post(&self, post: &Post, db: &sqlx::Pool<MySql>) -> Result<()> {
+        sqlx::query!("INSERT INTO post_like (user_id, post_id) VALUES (?, ?)", self.id, post.id())
+            .execute(db)
+            .await?;
+        Ok(())
+    }
+
+    pub(crate) async fn cancel_like_user(
+        &self,
+        target: &User,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<()> {
+        sqlx::query!(
+            "DELETE FROM user_like WHERE issuer_id = ? AND target_id = ?",
+            self.id,
+            target.id
+        )
+        .execute(db)
+        .await?;
+        Ok(())
+    }
+
+    pub(crate) async fn cancel_like_post(&self, post: &Post, db: &sqlx::Pool<MySql>) -> Result<()> {
+        sqlx::query!("DELETE FROM post_like WHERE user_id = ? AND post_id = ?", self.id, post.id())
+            .execute(db)
+            .await?;
+        Ok(())
+    }
+
     pub(crate) fn id(&self) -> UserId {
         self.id
     }
@@ -247,6 +318,10 @@ FROM user WHERE phone = ?",
 
     pub(crate) fn picture(&self) -> &str {
         &self.picture
+    }
+
+    pub(crate) fn total_likes(&self) -> i64 {
+        self.total_likes
     }
 
     async fn upload_verification_photo(
