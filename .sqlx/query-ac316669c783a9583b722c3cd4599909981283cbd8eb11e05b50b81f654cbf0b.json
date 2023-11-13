@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT id,\nauthor_id,\npost_type,\ntown_id,\ncontent,\nage_range,\ncapacity,\nplace,\n(SELECT COUNT(*) FROM post_like as pl WHERE pl.id = p.id) as `total_likes!`,\n(SELECT COUNT(*) FROM post_comment as pc WHERE pc.id = p.id) as `total_comments!`,\ncreated_at\nFROM post as p WHERE author_id = ?",
+  "query": "SELECT id,\nauthor_id,\npost_type,\ntown_id,\ncontent,\nage_range,\ncapacity,\nplace,\n(SELECT COUNT(*) FROM post_like as pl WHERE pl.post_id = p.id) as `total_likes!`,\n(SELECT COUNT(*) FROM post_comment as pc WHERE pc.post_id = p.id) as `total_comments!`,\ncreated_at FROM post as p WHERE id = ?",
   "describe": {
     "columns": [
       {
@@ -131,5 +131,5 @@
       false
     ]
   },
-  "hash": "9cc8c9cc9b225fda0dd965311ddf3eeb106d6ce75353556861344928691be60d"
+  "hash": "ac316669c783a9583b722c3cd4599909981283cbd8eb11e05b50b81f654cbf0b"
 }

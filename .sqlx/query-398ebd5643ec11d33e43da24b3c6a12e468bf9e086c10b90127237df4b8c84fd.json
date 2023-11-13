@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT\nid,\nname,\nphone,\nbirthdate,\nsex as `sex: Sex`,\ntown_id,\nverified as `verified: bool`,\nverification_type as `verification_type: IdVerificationType`,\nverification_photo_url,\npicture,\nbio,\nrefresh_token,\n(SELECT COUNT(*) FROM user_like as ul WHERE ul.id = u.id) as `total_likes!`,\ncreated_at,\nupdated_at\nFROM user as u WHERE u.id = ?",
+  "query": "SELECT\nid,\nname,\nphone,\nbirthdate,\nsex as `sex: Sex`,\ntown_id,\nverified as `verified: bool`,\nverification_type as `verification_type: IdVerificationType`,\nverification_photo_url,\npicture,\nbio,\nrefresh_token,\n(SELECT COUNT(*) FROM user_like as ul WHERE ul.target_id = u.id) as `total_likes!`,\ncreated_at,\nupdated_at\nFROM user as u WHERE phone = ?",
   "describe": {
     "columns": [
       {
@@ -175,5 +175,5 @@
       false
     ]
   },
-  "hash": "d455f6136bb2e344306df40e5a58873d572ca05f19bd6e0a0c56702ecd84e715"
+  "hash": "398ebd5643ec11d33e43da24b3c6a12e468bf9e086c10b90127237df4b8c84fd"
 }
