@@ -89,7 +89,11 @@ pub async fn verify_phone(
 
     PhoneVerification::cancel(&phone, &state.database).await?;
 
-    Ok(Json(create_jwt_token_pairs(&user, &state).await?))
+    let tokens = create_jwt_token_pairs(&user, &state).await?;
+
+    user.update_refresh_token(&tokens.refresh_token, &state.database).await?;
+
+    Ok(Json(tokens))
 }
 
 pub(crate) async fn update_profile_picture(
