@@ -179,7 +179,7 @@ pub(crate) async fn cancel_like_post(
 }
 
 pub(crate) async fn get_my_posts(
-    params: Query<PostListSchema>,
+    Query(params): Query<PostListSchema>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
@@ -190,7 +190,7 @@ pub(crate) async fn get_my_posts(
 
 pub(crate) async fn get_user_posts(
     Path(target_id): Path<UserId>,
-    params: Query<PostListSchema>,
+    Query(params): Query<PostListSchema>,
     State(state): State<Arc<AppState>>,
     Extension(_user): Extension<User>,
 ) -> Result<impl IntoResponse> {

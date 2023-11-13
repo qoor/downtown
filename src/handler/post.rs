@@ -129,7 +129,7 @@ pub(crate) async fn delete_post_comment(
 }
 
 pub(crate) async fn get_post_list(
-    params: Query<PostListSchema>,
+    Query(params): Query<PostListSchema>,
     State(state): State<Arc<AppState>>,
     user: Extension<User>,
 ) -> Result<impl IntoResponse> {
