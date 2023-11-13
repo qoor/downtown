@@ -241,6 +241,16 @@ pub struct PostListSchema {
     pub limit: Option<i32>,
 }
 
+impl PostListSchema {
+    pub fn last_id(&self) -> PostId {
+        self.last_id.unwrap_or(PostId::MAX)
+    }
+
+    pub fn limit(&self) -> i32 {
+        self.limit.unwrap_or(10)
+    }
+}
+
 #[derive(Serialize)]
 pub struct UserLikeResult {
     pub issuer_id: UserId,

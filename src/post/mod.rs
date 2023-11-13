@@ -12,7 +12,11 @@ use tempfile::NamedTempFile;
 use tokio::fs;
 
 use crate::{
-    aws::S3Client, schema::PostCreationSchema, town::TownId, user::account::UserId, Error, Result,
+    aws::S3Client,
+    schema::PostCreationSchema,
+    town::TownId,
+    user::account::{User, UserId},
+    Error, Result,
 };
 
 pub(crate) type PostId = u64;
@@ -201,7 +205,12 @@ created_at FROM post as p WHERE id = ?",
         })
     }
 
-    pub(crate) async fn from_user_id(user_id: UserId, db: &sqlx::Pool<MySql>) -> Result<Vec<Self>> {
+    pub(crate) async fn from_user(
+        user: &User,
+        last_id: PostId,
+        limit: i32,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Vec<Self>> {
         Ok(sqlx::query_as!(
             Self,
             "SELECT id,
@@ -215,8 +224,11 @@ place,
 (SELECT COUNT(*) FROM post_like as pl WHERE pl.post_id = p.id) as `total_likes!`,
 (SELECT COUNT(*) FROM post_comment as pc WHERE pc.post_id = p.id) as `total_comments!`,
 created_at
-FROM post as p WHERE author_id = ?",
-            user_id
+FROM post as p WHERE id < ? AND town_id = ? AND author_id = ? ORDER BY id DESC LIMIT ?",
+            last_id,
+            user.town_id(),
+            user.id(),
+            limit
         )
         .fetch_all(db)
         .await?)

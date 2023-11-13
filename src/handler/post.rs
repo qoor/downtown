@@ -133,17 +133,8 @@ pub(crate) async fn get_post_list(
     State(state): State<Arc<AppState>>,
     user: Extension<User>,
 ) -> Result<impl IntoResponse> {
-    let mut last_id = PostId::MAX;
-    let mut limit = 10;
-
-    if let Some(request_last_id) = params.last_id {
-        last_id = request_last_id;
-    }
-    if let Some(request_limit) = params.limit {
-        limit = request_limit;
-    }
-
-    let posts = Post::get(user.town_id(), last_id, limit, &state.database).await?;
+    let posts =
+        Post::get(user.town_id(), params.last_id(), params.limit(), &state.database).await?;
 
     Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
 }

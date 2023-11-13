@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     headers::{authorization::Bearer, Authorization},
     response::IntoResponse,
     Extension, Json, TypedHeader,
@@ -17,8 +17,8 @@ use crate::{
     post::{Post, PostId},
     schema::{
         PhoneVerificationSchema, PhoneVerificationSetupSchema, PostGetResult, PostLikeResult,
-        ProfileBioUpdateSchema, ProfilePictureUpdateSchema, RegistrationSchema, TokenSchema,
-        UserLikeResult,
+        PostListSchema, ProfileBioUpdateSchema, ProfilePictureUpdateSchema, RegistrationSchema,
+        TokenSchema, UserLikeResult,
     },
     user::{
         account::{User, UserId},
@@ -179,22 +179,24 @@ pub(crate) async fn cancel_like_post(
 }
 
 pub(crate) async fn get_my_posts(
+    params: Query<PostListSchema>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    let posts = Post::from_user_id(user.id(), &state.database).await?;
+    let posts = Post::from_user(&user, params.last_id(), params.limit(), &state.database).await?;
 
     Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
 }
 
 pub(crate) async fn get_user_posts(
     Path(target_id): Path<UserId>,
+    params: Query<PostListSchema>,
     State(state): State<Arc<AppState>>,
     Extension(_user): Extension<User>,
 ) -> Result<impl IntoResponse> {
     let target_user = User::from_id(target_id, &state.database).await?;
-
-    let posts = Post::from_user_id(target_user.id(), &state.database).await?;
+    let posts =
+        Post::from_user(&target_user, params.last_id(), params.limit(), &state.database).await?;
 
     Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
 }
