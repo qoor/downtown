@@ -418,6 +418,12 @@ impl GatheringAgeRange {
             .await?)
     }
 
+    pub(crate) async fn get_all(db: &sqlx::Pool<MySql>) -> Result<Vec<Self>> {
+        Ok(sqlx::query_as!(GatheringAgeRange, "SELECT * FROM gathering_age_range")
+            .fetch_all(db)
+            .await?)
+    }
+
     pub(crate) fn id(&self) -> u32 {
         self.id
     }

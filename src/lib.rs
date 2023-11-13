@@ -43,6 +43,7 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
     let user_routers = axum::Router::new()
         .route("/user", post(handler::user::create_user))
         .route("/user/:id", get(handler::user::get_other_user_info).route_layer(auth_layer.clone()))
+        .route("/user/:id/post", get(handler::user::get_user_posts).route_layer(auth_layer.clone()))
         .route("/user/me", get(handler::user::get_user_info).route_layer(auth_layer.clone()))
         .route(
             "/user/me/picture",
@@ -68,6 +69,7 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
             "/user/me/like/post/:id",
             delete(handler::user::cancel_like_post).route_layer(auth_layer.clone()),
         )
+        .route("/user/me/post", get(handler::user::get_my_posts).route_layer(auth_layer.clone()))
         .route("/user/verification", patch(handler::user::refresh_verification))
         .route("/user/verification/phone", post(handler::user::setup_phone_verification))
         .route("/user/verification/phone", put(handler::user::verify_phone));

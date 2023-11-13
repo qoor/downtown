@@ -145,11 +145,5 @@ pub(crate) async fn get_post_list(
 
     let posts = Post::get(user.town_id(), last_id, limit, &state.database).await?;
 
-    let mut response: Vec<PostGetResult> = vec![];
-    response.reserve(posts.len());
-    for post in posts {
-        response.push(PostGetResult::from_post(&post, &state.database).await?);
-    }
-
-    Ok(Json(response))
+    Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
 }

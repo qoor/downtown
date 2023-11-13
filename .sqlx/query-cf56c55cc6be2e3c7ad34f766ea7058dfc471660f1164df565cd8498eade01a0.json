@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT id FROM user_like WHERE issuer_id = ?",
+  "query": "SELECT id FROM user_like WHERE issuer_id = ? AND target_id = ? LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -15,11 +15,11 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 2
     },
     "nullable": [
       false
     ]
   },
-  "hash": "3c0c878f15f50d86bcb0e38579573be299455a27b2956765307efa1f0477876d"
+  "hash": "cf56c55cc6be2e3c7ad34f766ea7058dfc471660f1164df565cd8498eade01a0"
 }

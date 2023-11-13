@@ -16,7 +16,7 @@ use serde::Serialize;
 use crate::{
     post::{Post, PostId},
     schema::{
-        PhoneVerificationSchema, PhoneVerificationSetupSchema, PostLikeResult,
+        PhoneVerificationSchema, PhoneVerificationSetupSchema, PostGetResult, PostLikeResult,
         ProfileBioUpdateSchema, ProfilePictureUpdateSchema, RegistrationSchema, TokenSchema,
         UserLikeResult,
     },
@@ -169,13 +169,39 @@ pub(crate) async fn like_post(
 }
 
 pub(crate) async fn cancel_like_post(
-    Path(post_id): Path<UserId>,
+    Path(post_id): Path<PostId>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
     user.cancel_like_post(&Post::from_id(post_id, &state.database).await?, &state.database).await?;
 
     Ok(Json(PostLikeResult { user_id: user.id(), post_id }))
+}
+
+pub(crate) async fn get_my_posts(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    let posts = Post::from_user_id(user.id(), &state.database).await?;
+
+    Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
+}
+
+pub(crate) async fn get_user_posts(
+    Path(target_id): Path<UserId>,
+    State(state): State<Arc<AppState>>,
+    Extension(_user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    let target_user = User::from_id(target_id, &state.database).await?;
+
+    let posts = Post::from_user_id(target_user.id(), &state.database).await?;
+    let mut response: Vec<PostGetResult> = vec![];
+    response.reserve(posts.len());
+    for post in posts {
+        response.push(PostGetResult::from_post(&post, &state.database).await?);
+    }
+
+    Ok(Json(response))
 }
 
 async fn create_jwt_token_pairs(user: &User, state: &Arc<AppState>) -> Result<TokenSchema> {
