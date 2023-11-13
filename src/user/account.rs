@@ -8,6 +8,7 @@ use rand::{distributions::Alphanumeric, Rng};
 use sqlx::MySql;
 use tempfile::NamedTempFile;
 use tokio::{fs, io};
+use tracing::error;
 
 use crate::{
     aws,
@@ -177,14 +178,20 @@ FROM user WHERE phone = ?",
 
     pub(crate) fn verify_refresh_token(&self, refresh_token: &str) -> Result<()> {
         if refresh_token.is_empty() {
+            error!("user {}'s token is empty", self.name);
             return Err(Error::InvalidToken);
         }
 
         if let Some(user_token) = &self.refresh_token {
             if user_token != refresh_token {
+                error!(
+                    "user {}'s token is not same ({} vs {})",
+                    self.name, refresh_token, user_token
+                );
                 return Err(Error::InvalidToken);
             }
         } else {
+            error!("user {} does not have refresh_token", self.name);
             return Err(Error::InvalidToken);
         }
 
