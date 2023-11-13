@@ -158,21 +158,7 @@ impl PostGetResult {
         .await?
         .is_some();
 
-        Ok(Self {
-            id: post.id(),
-            author: user.into(),
-            post_type: post.post_type(),
-            town_id: post.town_id(),
-            content: post.content().to_string(),
-            images: post.images(db).await?,
-            age_range,
-            capacity: post.capacity(),
-            place: post.place().map(str::to_string),
-            total_likes: post.total_likes(),
-            my_like,
-            total_comments: post.total_comments(),
-            created_at: post.created_at(),
-        })
+        Ok(Self::new(post, user, post.images(db).await?, age_range, my_like))
     }
 
     pub(crate) async fn from_posts(posts: Vec<Post>, db: &sqlx::Pool<MySql>) -> Result<Vec<Self>> {
@@ -180,7 +166,7 @@ impl PostGetResult {
         let mut results: Vec<Self> = vec![];
 
         results.reserve(posts.len());
-        for post in posts {
+        for post in posts.iter() {
             let user = User::from_id(post.author_id(), db).await?;
             let my_like = sqlx::query!(
                 "SELECT id FROM post_like WHERE user_id = ? AND post_id = ? LIMIT 1",
@@ -190,34 +176,43 @@ impl PostGetResult {
             .fetch_optional(db)
             .await?
             .is_some();
+            let age_range = if let Some(post_age_range) = post.age_range() {
+                age_ranges
+                    .iter()
+                    .find(|age_range| post_age_range == age_range.id())
+                    .map(|age_range| age_range.description().to_string())
+            } else {
+                None
+            };
 
-            results.push(Self {
-                id: post.id(),
-                author: user.into(),
-                post_type: post.post_type(),
-                town_id: post.town_id(),
-                content: post.content().to_string(),
-                images: post.images(db).await?,
-                age_range: {
-                    if let Some(post_age_range) = post.age_range() {
-                        age_ranges
-                            .iter()
-                            .find(|age_range| post_age_range == age_range.id())
-                            .map(|age_range| age_range.description().to_string())
-                    } else {
-                        None
-                    }
-                },
-                capacity: post.capacity(),
-                place: post.place().map(str::to_string),
-                total_likes: post.total_likes(),
-                my_like,
-                total_comments: post.total_comments(),
-                created_at: post.created_at(),
-            })
+            results.push(Self::new(post, user, post.images(db).await?, age_range, my_like));
         }
 
         Ok(results)
+    }
+
+    fn new(
+        post: &Post,
+        user: User,
+        images: Vec<String>,
+        age_range: Option<String>,
+        my_like: bool,
+    ) -> Self {
+        Self {
+            id: post.id(),
+            author: user.into(),
+            post_type: post.post_type(),
+            town_id: post.town_id(),
+            content: post.content().to_string(),
+            images,
+            age_range,
+            capacity: post.capacity(),
+            place: post.place().map(str::to_string),
+            total_likes: post.total_likes(),
+            my_like,
+            total_comments: post.total_comments(),
+            created_at: post.created_at(),
+        }
     }
 }
 
