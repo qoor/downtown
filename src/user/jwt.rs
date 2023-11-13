@@ -12,7 +12,6 @@ use axum::{
 use chrono::{Duration, Utc};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey};
 use serde::{Deserialize, Serialize};
-use tracing::error;
 
 use crate::{AppState, Error, Result};
 
@@ -60,7 +59,6 @@ impl Token {
         let encoded_token =
             encoded_token.ok_or(Error::TokenNotExists).and_then(|encoded_token| {
                 if encoded_token.is_empty() {
-                    error!("encoded token from request is empty");
                     return Err(Error::InvalidToken);
                 }
 
