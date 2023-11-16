@@ -29,11 +29,12 @@ const VERIFICATION_PHOTO_PATH: &str = "verification_photo/";
 pub enum VerificationResult {
     NotVerified = 0,
     Verified = 1,
-    LowQualityPicture,
-    NonMaskedIdCard,
-    NonMaskedDriverLicense,
-    NonMaskedAll,
-    NonResident,
+    InvalidPicture = 2,
+    LowQualityPicture = 3,
+    NonMaskedIdCard = 4,
+    NonMaskedDriverLicense = 5,
+    NonMaskedAll = 6,
+    NonResident = 7,
 }
 
 #[derive(Debug, sqlx::FromRow, Clone)]
