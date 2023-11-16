@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO phone_authorization (phone, code) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "b85d0f2a891bfdc95b7d800741cc6e2f111a1c4a24616c2e3d4bd59a0b0ad710"
+}

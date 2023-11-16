@@ -23,7 +23,7 @@ impl PhoneAuthentication {
 
         let code = format!("{:06}", rand::thread_rng().gen_range(100000..999999));
 
-        sqlx::query!("INSERT INTO phone_verification (phone, code) VALUES (?, ?)", phone, code)
+        sqlx::query!("INSERT INTO phone_authorization (phone, code) VALUES (?, ?)", phone, code)
             .execute(db)
             .await?;
 
@@ -47,14 +47,14 @@ impl PhoneAuthentication {
     }
 
     pub(crate) async fn cancel(phone: &str, db: &sqlx::Pool<MySql>) -> Result<()> {
-        Ok(sqlx::query!("DELETE FROM phone_verification WHERE phone = ?", phone)
+        Ok(sqlx::query!("DELETE FROM phone_authorization WHERE phone = ?", phone)
             .execute(db)
             .await
             .map(|_| ())?)
     }
 
     async fn from_phone(phone: &str, db: &sqlx::Pool<MySql>) -> Result<Self> {
-        sqlx::query_as!(Self, "SELECT * FROM phone_verification WHERE phone = ?", phone)
+        sqlx::query_as!(Self, "SELECT * FROM phone_authorization WHERE phone = ?", phone)
             .fetch_one(db)
             .await
             .map_err(|error| match error {

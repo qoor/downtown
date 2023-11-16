@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM phone_authorization WHERE phone = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "6bc4de3a5602c1ea86840e3eb2c81d9923a0ddcb2b380d36158c1eb859d3f9f6"
+}

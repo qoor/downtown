@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT * FROM phone_verification WHERE phone = ?",
+  "query": "SELECT * FROM phone_authorization WHERE phone = ?",
   "describe": {
     "columns": [
       {
@@ -54,5 +54,5 @@
       false
     ]
   },
-  "hash": "cf97ec56f6c492c6505c65d552981ea5a7ab7f69c288d1f19c1760841428ad0f"
+  "hash": "4ae7455dcff677301e686dc36df281b63d75ad3b1dcd9aaae78173a84ce03475"
 }
