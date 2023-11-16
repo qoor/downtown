@@ -5,6 +5,7 @@ use std::{fs::File, path::PathBuf};
 use axum_typed_multipart::FieldData;
 use chrono::{DateTime, NaiveDate, Utc};
 use rand::{distributions::Alphanumeric, Rng};
+use serde_repr::Serialize_repr;
 use sqlx::MySql;
 use tempfile::NamedTempFile;
 use tokio::{fs, io};
@@ -23,6 +24,18 @@ pub(crate) type UserId = u64;
 
 const VERIFICATION_PHOTO_PATH: &str = "verification_photo/";
 
+#[derive(Debug, sqlx::Type, Clone, Copy, Serialize_repr)]
+#[repr(i32)]
+pub enum VerificationResult {
+    NotVerified = 0,
+    Verified = 1,
+    LowQualityPicture,
+    NonMaskedIdCard,
+    NonMaskedDriverLicense,
+    NonMaskedAll,
+    NonResident,
+}
+
 #[derive(Debug, sqlx::FromRow, Clone)]
 pub(crate) struct User {
     id: UserId,
@@ -31,7 +44,7 @@ pub(crate) struct User {
     birthdate: NaiveDate,
     sex: Sex,
     town_id: TownId,
-    verified: bool,
+    verification_result: VerificationResult,
     verification_type: IdVerificationType,
     verification_photo_url: String,
     picture: String,
@@ -100,7 +113,7 @@ phone,
 birthdate,
 sex as `sex: Sex`,
 town_id,
-verified as `verified: bool`,
+verification_result as `verification_result: VerificationResult`,
 verification_type as `verification_type: IdVerificationType`,
 verification_photo_url,
 picture,
@@ -130,7 +143,7 @@ phone,
 birthdate,
 sex as `sex: Sex`,
 town_id,
-verified as `verified: bool`,
+verification_result as `verification_result: VerificationResult`,
 verification_type as `verification_type: IdVerificationType`,
 verification_photo_url,
 picture,
@@ -160,7 +173,7 @@ FROM user as u WHERE phone = ?",
             birthdate: self.birthdate,
             sex: self.sex.to_string(),
             town,
-            verified: self.verified,
+            verification_result: self.verification_result,
             verification_type: self.verification_type.to_string(),
             verification_photo_url: self.verification_photo_url.to_string(),
             picture: self.picture.clone(),
@@ -191,7 +204,7 @@ FROM user as u WHERE phone = ?",
             birthdate: self.birthdate,
             sex: self.sex.to_string(),
             town,
-            verified: self.verified,
+            verification_result: self.verification_result,
             picture: self.picture.clone(),
             bio: self.bio.clone().unwrap_or_default(),
             total_likes: self.total_likes,
@@ -303,7 +316,7 @@ FROM user as u WHERE phone = ?",
     }
 
     pub(crate) fn is_verified(&self) -> bool {
-        self.verified
+        matches!(self.verification_result, VerificationResult::Verified)
     }
 
     pub(crate) fn town_id(&self) -> TownId {
