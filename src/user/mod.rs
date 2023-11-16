@@ -1,8 +1,8 @@
 // Copyright 2023. The downtown authors all rights reserved.
 
 pub(crate) mod account;
+pub(crate) mod authentication;
 pub(crate) mod jwt;
-pub(crate) mod verification;
 
 use std::str::FromStr;
 

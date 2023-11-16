@@ -7,14 +7,14 @@ use sqlx::MySql;
 use crate::{Error, Result};
 
 #[derive(Debug, sqlx::FromRow)]
-pub(crate) struct PhoneVerification {
+pub(crate) struct PhoneAuthentication {
     id: u64,
     phone: String,
     code: String,
     created_at: DateTime<Utc>,
 }
 
-impl PhoneVerification {
+impl PhoneAuthentication {
     // TODO: Send a verification code message to user
     pub(crate) async fn send(phone: &str, db: &sqlx::Pool<MySql>) -> Result<Self> {
         let tx = db.begin().await?;
@@ -34,7 +34,7 @@ impl PhoneVerification {
         result
     }
 
-    pub(crate) async fn verify(phone: &str, code: &str, db: &sqlx::Pool<MySql>) -> Result<()> {
+    pub(crate) async fn authorize(phone: &str, code: &str, db: &sqlx::Pool<MySql>) -> Result<()> {
         let data = Self::from_phone(phone, db).await?;
 
         match (Utc::now() - data.created_at).num_minutes() {

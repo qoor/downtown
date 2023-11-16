@@ -22,8 +22,8 @@ use crate::{
     },
     user::{
         account::{User, UserId},
+        authentication::PhoneAuthentication,
         jwt::{authorize_user, Token},
-        verification::PhoneVerification,
     },
     AppState, Result,
 };
@@ -35,11 +35,11 @@ pub async fn create_user(
     let phone = payload.phone.clone();
     let authorization_code = payload.authorization_code.clone();
 
-    PhoneVerification::verify(&phone, &authorization_code, &state.database).await?;
+    PhoneAuthentication::authorize(&phone, &authorization_code, &state.database).await?;
 
     let user = User::register(payload, &state.database, &state.s3).await?;
 
-    PhoneVerification::cancel(&phone, &state.database).await?;
+    PhoneAuthentication::cancel(&phone, &state.database).await?;
 
     Ok(Json(create_jwt_token_pairs(&user, &state).await?))
 }
@@ -83,7 +83,7 @@ pub async fn setup_phone_verification(
         PhoneVerificationSetupSchema,
     >,
 ) -> Result<impl IntoResponse> {
-    PhoneVerification::send(&phone, &state.database).await?;
+    PhoneAuthentication::send(&phone, &state.database).await?;
 
     Ok(StatusCode::CREATED)
 }
@@ -94,11 +94,11 @@ pub async fn verify_phone(
         PhoneVerificationSchema,
     >,
 ) -> Result<impl IntoResponse> {
-    PhoneVerification::verify(&phone, &code, &state.database).await?;
+    PhoneAuthentication::authorize(&phone, &code, &state.database).await?;
 
     let user = User::from_phone(&phone, &state.database).await?;
 
-    PhoneVerification::cancel(&phone, &state.database).await?;
+    PhoneAuthentication::cancel(&phone, &state.database).await?;
 
     Ok(Json(create_jwt_token_pairs(&user, &state).await?))
 }
