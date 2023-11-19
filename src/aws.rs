@@ -2,6 +2,7 @@
 
 use std::path::Path;
 
+use aws_config::BehaviorVersion;
 use aws_sdk_s3::primitives::ByteStream;
 
 use crate::{env::get_env_or_panic, Error, Result};
@@ -14,7 +15,7 @@ pub(crate) struct S3Client {
 
 impl S3Client {
     pub async fn from_env() -> Self {
-        let aws_config = aws_config::load_from_env().await;
+        let aws_config = aws_config::load_defaults(BehaviorVersion::latest()).await;
 
         Self {
             client: aws_sdk_s3::Client::new(&aws_config),

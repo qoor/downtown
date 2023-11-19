@@ -11,15 +11,15 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aws-config = "0.57.1"
-aws-sdk-s3 = "0.35.0"
+aws-config = "0.101.0"
+aws-sdk-s3 = "0.38.0"
 axum = { version = "0.6.20", features = ["headers"] }
 axum-extra = { version = "0.8.0", features = ["cookie"] }
-axum_typed_multipart = "0.10.1"
+axum_typed_multipart = "0.10.2"
 chrono = { version = "0.4.31", features = ["serde"] }
 dotenvy = "0.15.7"
 futures-util = "0.3.29"
-hyper = { version = "0.14.27", features = ["full"] }
+hyper = { version = "1.0.1", features = ["full"] }
 jsonwebtoken = { version = "9.1.0", features = ["use_pem"] }
 oauth2 = "4.4.2"
 rand = "0.8.5"
@@ -32,7 +32,7 @@ tempfile = "3.8.1"
 thiserror = "1.0.50"
 tokio = { version = "1.34.0", features = ["full"] }
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 [dev-dependencies]
 tower = { version = "0.4.13", features = ["util"] }

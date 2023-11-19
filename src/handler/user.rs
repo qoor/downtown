@@ -5,12 +5,12 @@ use std::sync::Arc;
 use axum::{
     extract::{Path, Query, State},
     headers::{authorization::Bearer, Authorization},
+    http::StatusCode,
     response::IntoResponse,
     Extension, Json, TypedHeader,
 };
 use axum_typed_multipart::TypedMultipart;
 use chrono::Duration;
-use hyper::StatusCode;
 use serde::Serialize;
 
 use crate::{
