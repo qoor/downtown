@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT\nid,\nname,\nphone,\nbirthdate,\nsex as `sex: Sex`,\ntown_id,\nverification_result as `verification_result: VerificationResult`,\nverification_type as `verification_type: IdVerificationType`,\nverification_photo_url,\npicture,\nbio,\nrefresh_token,\n(SELECT COUNT(*) FROM user_like as ul WHERE ul.target_id = u.id) as `total_likes!`,\ncreated_at,\nupdated_at\nFROM user as u WHERE u.id = ?",
+  "query": "SELECT\nid,\nname,\nphone,\nbirthdate,\nsex as `sex: Sex`,\ntown_id,\nverification_result as `verification_result: _`,\nverification_type as `verification_type: _`,\nverification_photo_url,\npicture,\nbio,\nrefresh_token,\n(SELECT COUNT(*) FROM user_like as ul WHERE ul.target_id = u.id) as `total_likes!`,\ncreated_at,\nupdated_at\nFROM user as u WHERE u.id = ?",
   "describe": {
     "columns": [
       {
@@ -65,7 +65,7 @@
       },
       {
         "ordinal": 6,
-        "name": "verification_result: VerificationResult",
+        "name": "verification_result: _",
         "type_info": {
           "type": "Long",
           "flags": "NOT_NULL | UNSIGNED",
@@ -75,7 +75,7 @@
       },
       {
         "ordinal": 7,
-        "name": "verification_type: IdVerificationType",
+        "name": "verification_type: _",
         "type_info": {
           "type": "Tiny",
           "flags": "NOT_NULL | UNSIGNED | NO_DEFAULT_VALUE",
@@ -175,5 +175,5 @@
       false
     ]
   },
-  "hash": "4250cc4e90e0163065e9f67d1fd2ab132a46c819da544a39c37a3e4865fbf434"
+  "hash": "ab906ae533efbb0987bf590a2f30a43b7f3fdd8a8f31da74fdd35857fa4b2e7b"
 }

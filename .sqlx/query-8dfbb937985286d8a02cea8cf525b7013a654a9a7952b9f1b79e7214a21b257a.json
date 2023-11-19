@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT\nid,\npost_id,\nauthor_id as `author_id?: UserId`,\ncontent,\ndeleted as `deleted: bool`,\ncreated_at\nFROM post_comment WHERE id = ?",
+  "query": "SELECT\nc.id,\nc.post_id,\nc.author_id as `author_id: _`,\nc.content,\nc.deleted as `deleted: _`,\nc.created_at\nFROM post_comment AS c\nINNER JOIN post_comment_closure AS cs ON (cs.parent_comment_id = c.id OR cs.child_comment_id = c.id)\nWHERE c.post_id = ?\nGROUP BY cs.parent_comment_id",
   "describe": {
     "columns": [
       {
@@ -25,7 +25,7 @@
       },
       {
         "ordinal": 2,
-        "name": "author_id?: UserId",
+        "name": "author_id: _",
         "type_info": {
           "type": "Long",
           "flags": "MULTIPLE_KEY | UNSIGNED",
@@ -45,7 +45,7 @@
       },
       {
         "ordinal": 4,
-        "name": "deleted: bool",
+        "name": "deleted: _",
         "type_info": {
           "type": "Tiny",
           "flags": "NOT_NULL",
@@ -76,5 +76,5 @@
       false
     ]
   },
-  "hash": "d16440ba7387d4b43feca3c2a0f8a302e073e26afce2b2b8bb349e3c03d91e92"
+  "hash": "8dfbb937985286d8a02cea8cf525b7013a654a9a7952b9f1b79e7214a21b257a"
 }
