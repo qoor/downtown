@@ -27,9 +27,9 @@ impl Comment {
             "SELECT
 c.id,
 c.post_id,
-c.author_id as `author_id?: UserId`,
+c.author_id as `author_id: _`,
 c.content,
-c.deleted as `deleted: bool`,
+c.deleted as `deleted: _`,
 c.created_at
 FROM post_comment AS c
 INNER JOIN post_comment_closure AS cs ON (cs.parent_comment_id = c.id OR cs.child_comment_id = c.id)
@@ -104,9 +104,9 @@ IN (SELECT child_comment_id FROM post_comment_closure WHERE parent_comment_id = 
             "SELECT
 id,
 post_id,
-author_id as `author_id?: UserId`,
+author_id as `author_id: _`,
 content,
-deleted as `deleted: bool`,
+deleted as `deleted: _`,
 created_at
 FROM post_comment WHERE id = ?",
             id
