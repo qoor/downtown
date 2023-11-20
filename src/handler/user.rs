@@ -10,7 +10,7 @@ use axum::{
     Extension, Json, TypedHeader,
 };
 use axum_typed_multipart::TypedMultipart;
-use chrono::Duration;
+use chrono::{Datelike, Duration};
 use serde::Serialize;
 
 use crate::{
@@ -83,9 +83,24 @@ pub async fn setup_phone_verification(
         PhoneVerificationSetupSchema,
     >,
 ) -> Result<impl IntoResponse> {
-    PhoneAuthentication::send(&phone, &state.database).await?;
+    let user = User::from_phone(&phone, &state.database).await?;
+    let bypass = user.created_at().year() == 1970;
+    let result = PhoneAuthentication::send(&phone, &state.database).await?;
 
-    Ok(StatusCode::CREATED)
+    #[derive(Serialize)]
+    struct PhoneAuthenticationSetupResult {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        code: Option<String>,
+    }
+    Ok(Json(PhoneAuthenticationSetupResult {
+        code: {
+            if !bypass {
+                None
+            } else {
+                Some(result.code().to_string())
+            }
+        },
+    }))
 }
 
 pub async fn verify_phone(

@@ -332,8 +332,8 @@ FROM user as u WHERE phone = ?",
         &self.picture
     }
 
-    pub(crate) fn total_likes(&self) -> i64 {
-        self.total_likes
+    pub(crate) fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
     }
 
     async fn upload_verification_photo(

@@ -53,6 +53,10 @@ impl PhoneAuthentication {
             .map(|_| ())?)
     }
 
+    pub(crate) fn code(&self) -> &str {
+        &self.code
+    }
+
     async fn from_phone(phone: &str, db: &sqlx::Pool<MySql>) -> Result<Self> {
         sqlx::query_as!(Self, "SELECT * FROM phone_authorization WHERE phone = ?", phone)
             .fetch_one(db)
