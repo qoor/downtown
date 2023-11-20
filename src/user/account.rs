@@ -25,7 +25,7 @@ pub(crate) type UserId = u64;
 const VERIFICATION_PHOTO_PATH: &str = "verification_photo/";
 
 #[derive(Debug, sqlx::Type, Clone, Copy, Serialize_repr)]
-#[repr(i32)]
+#[repr(u32)]
 pub enum VerificationResult {
     NotVerified = 0,
     Verified = 1,
