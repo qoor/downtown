@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO post_comment_closure (parent_comment_id, child_comment_id)\n            SELECT cs.parent_comment_id, ? FROM post_comment_closure AS cs WHERE cs.child_comment_id = ?\n            UNION ALL SELECT ?, ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "18d760ebce73960eebf3f383fb27a633d5f9766b87166df0c62d668ed2eb5634"
+}

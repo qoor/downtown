@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT\nid,\npost_id,\nauthor_id as `author_id: _`,\ncontent,\ndeleted as `deleted: _`,\ncreated_at\nFROM post_comment WHERE id = ?",
+  "query": "SELECT\n            id,\n            post_id,\n            author_id as `author_id: _`,\n            content,\n            deleted as `deleted: _`,\n            created_at\n            FROM post_comment WHERE id = ?",
   "describe": {
     "columns": [
       {
@@ -76,5 +76,5 @@
       false
     ]
   },
-  "hash": "b6adf2dea992fe8dc564960a035ef186d7781822e6609e3b5ac22f4c1e920d0f"
+  "hash": "2cb371b08bb960ff9ad5f790d07380b78f3e1c695733972fe0a2b18cb097cb0b"
 }

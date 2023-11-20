@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM post_comment_closure\n            WHERE child_comment_id\n            IN (SELECT child_comment_id FROM post_comment_closure WHERE parent_comment_id = ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "802e385ac123112f0a6ecede37fc95bd9f4db7bb1ae616e7a353faf5250e9fee"
+}

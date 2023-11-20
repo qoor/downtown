@@ -10,7 +10,7 @@ use super::PostId;
 
 pub(crate) type CommentId = u64;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, sqlx::FromRow)]
 pub(crate) struct Comment {
     id: CommentId,
     post_id: PostId,
@@ -20,25 +20,40 @@ pub(crate) struct Comment {
     created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub(crate) struct CommentNode {
+    #[serde(flatten)]
+    #[sqlx(flatten)]
+    comment: Comment,
+    parent_comment_id: CommentId,
+    child_comment_id: CommentId,
+}
+
 impl Comment {
-    pub(crate) async fn from_post_id(post_id: PostId, db: &sqlx::Pool<MySql>) -> Result<Vec<Self>> {
-        Ok(sqlx::query_as!(
-            Self,
-            "SELECT
+    pub(crate) async fn from_post_id(
+        post_id: PostId,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Vec<CommentNode>> {
+        Ok(sqlx::query_as(
+                "SELECT
 c.id,
 c.post_id,
 c.author_id as `author_id: _`,
 c.content,
 c.deleted as `deleted: _`,
-c.created_at
-FROM post_comment AS c
-INNER JOIN post_comment_closure AS cs ON (cs.parent_comment_id = c.id OR cs.child_comment_id = c.id)
-WHERE c.post_id = ?
-GROUP BY cs.parent_comment_id",
-            post_id
-        )
-        .fetch_all(db)
-        .await?)
+c.created_at,
+cc.parent_comment_id,
+cc.child_comment_id
+FROM post_comment as c
+INNER JOIN post_comment_closure as cc ON cc.child_comment_id = c.id
+WHERE cc.parent_comment_id IN
+(SELECT id FROM post_comment as c
+INNER JOIN post_comment_closure as cc ON cc.parent_comment_id = cc.child_comment_id WHERE c.post_id = ?)
+GROUP BY cc.parent_comment_id
+ORDER BY c.created_at DESC",
+            )
+            .bind(post_id)
+            .fetch_all(db).await?)
     }
 
     pub(crate) async fn add(
@@ -63,15 +78,15 @@ GROUP BY cs.parent_comment_id",
 
         sqlx::query!(
             "INSERT INTO post_comment_closure (parent_comment_id, child_comment_id)
-SELECT cs.parent_comment_id, ? FROM post_comment_closure AS cs WHERE cs.child_comment_id = ?
-UNION ALL SELECT ?, ?",
+            SELECT cs.parent_comment_id, ? FROM post_comment_closure AS cs WHERE cs.child_comment_id = ?
+            UNION ALL SELECT ?, ?",
             id,
             parent_comment_id,
             id,
             id
-        )
-        .execute(db)
-        .await?;
+            )
+            .execute(db)
+            .await?;
 
         let comment = Self::from_id(id, db).await?;
 
@@ -85,8 +100,8 @@ UNION ALL SELECT ?, ?",
 
         sqlx::query!(
             "DELETE FROM post_comment_closure
-WHERE child_comment_id
-IN (SELECT child_comment_id FROM post_comment_closure WHERE parent_comment_id = ?)",
+            WHERE child_comment_id
+            IN (SELECT child_comment_id FROM post_comment_closure WHERE parent_comment_id = ?)",
             id
         )
         .execute(db)
@@ -102,13 +117,13 @@ IN (SELECT child_comment_id FROM post_comment_closure WHERE parent_comment_id = 
         sqlx::query_as!(
             Self,
             "SELECT
-id,
-post_id,
-author_id as `author_id: _`,
-content,
-deleted as `deleted: _`,
-created_at
-FROM post_comment WHERE id = ?",
+            id,
+            post_id,
+            author_id as `author_id: _`,
+            content,
+            deleted as `deleted: _`,
+            created_at
+            FROM post_comment WHERE id = ?",
             id
         )
         .fetch_optional(db)
