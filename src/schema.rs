@@ -92,7 +92,6 @@ pub struct ProfileBioUpdateSchema {
 
 #[derive(TryFromMultipart)]
 pub struct PostCreationSchema {
-    pub author_id: UserId,
     pub post_type: PostType,
     pub content: String,
     pub age_range: Option<String>,

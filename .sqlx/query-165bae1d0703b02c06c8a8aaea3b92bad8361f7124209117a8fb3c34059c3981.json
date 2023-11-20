@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT\n            id,\n            post_id,\n            author_id as `author_id: _`,\n            content,\n            deleted as `deleted: _`,\n            created_at\n            FROM post_comment WHERE id = ?",
+  "query": "SELECT\nid,\npost_id,\nauthor_id as `author_id: _`,\ncontent,\ndeleted as `deleted: _`,\ncreated_at\nFROM post_comment WHERE id = ? AND\nauthor_id NOT IN (SELECT target_id FROM user_block WHERE user_id = ?) AND\nid NOT IN (SELECT comment_id FROM post_comment_block WHERE user_id = ?)",
   "describe": {
     "columns": [
       {
@@ -65,7 +65,7 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 3
     },
     "nullable": [
       false,
@@ -76,5 +76,5 @@
       false
     ]
   },
-  "hash": "2cb371b08bb960ff9ad5f790d07380b78f3e1c695733972fe0a2b18cb097cb0b"
+  "hash": "165bae1d0703b02c06c8a8aaea3b92bad8361f7124209117a8fb3c34059c3981"
 }

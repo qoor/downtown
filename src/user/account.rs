@@ -12,7 +12,7 @@ use tokio::{fs, io};
 
 use crate::{
     aws,
-    post::Post,
+    post::{comment::Comment, Post},
     schema::{OtherUserSchema, RegistrationSchema, UserSchema},
     town::{Town, TownId},
     Error, Result,
@@ -309,6 +309,93 @@ FROM user as u WHERE phone = ?",
         sqlx::query!("DELETE FROM post_like WHERE user_id = ? AND post_id = ?", self.id, post.id())
             .execute(db)
             .await?;
+        Ok(())
+    }
+
+    pub(crate) async fn is_blocked(&self, blocker: &User, db: &sqlx::Pool<MySql>) -> Result<bool> {
+        Ok(sqlx::query!(
+            "SELECT id FROM user_block WHERE user_id = ? AND target_id = ?",
+            blocker.id,
+            self.id,
+        )
+        .fetch_optional(db)
+        .await?
+        .is_some())
+    }
+
+    pub(crate) async fn block_user(&self, target: &User, db: &sqlx::Pool<MySql>) -> Result<()> {
+        sqlx::query!(
+            "INSERT INTO user_block (user_id, target_id) VALUES (?, ?)",
+            self.id,
+            target.id
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn unblock_user(&self, target: &User, db: &sqlx::Pool<MySql>) -> Result<()> {
+        sqlx::query!(
+            "DELETE FROM user_block WHERE user_id = ? AND target_id = ?",
+            self.id,
+            target.id
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn block_post(&self, post: &Post, db: &sqlx::Pool<MySql>) -> Result<()> {
+        sqlx::query!("INSERT INTO post_block (user_id, post_id) VALUES (?, ?)", self.id, post.id())
+            .execute(db)
+            .await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn unblock_post(&self, post: &Post, db: &sqlx::Pool<MySql>) -> Result<()> {
+        sqlx::query!(
+            "DELETE FROM post_block WHERE user_id = ? AND post_id = ?",
+            self.id,
+            post.id()
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn block_post_comment(
+        &self,
+        comment: &Comment,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<()> {
+        sqlx::query!(
+            "INSERT INTO post_comment_block (user_id, comment_id) VALUES (?, ?)",
+            self.id,
+            comment.id()
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn unblock_post_comment(
+        &self,
+        comment: &Comment,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<()> {
+        sqlx::query!(
+            "DELETE FROM post_comment_block WHERE user_id = ? AND comment_id = ?",
+            self.id,
+            comment.id()
+        )
+        .execute(db)
+        .await?;
+
         Ok(())
     }
 

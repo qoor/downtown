@@ -82,7 +82,7 @@ struct PostImage {
 
 impl Post {
     pub(crate) async fn create(
-        town_id: TownId,
+        user: &User,
         mut data: PostCreationSchema,
         db: &sqlx::Pool<MySql>,
         s3: &S3Client,
@@ -110,9 +110,9 @@ impl Post {
 
         let id = sqlx::query!(
             "INSERT INTO post (author_id, post_type, town_id, content, age_range, capacity, place) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            data.author_id,
+            user.id(),
             data.post_type,
-            town_id,
+            user.town_id(),
             data.content,
             age_range_id,
             data.capacity,
@@ -121,7 +121,7 @@ impl Post {
         .execute(db)
         .await
         .map(|row| row.last_insert_id())?;
-        let post = Self::from_id(id, db).await?;
+        let post = Self::from_id(id, user, db).await?;
         post.upload_images(data.images, db, s3).await?;
 
         tx.commit().await?;
@@ -181,7 +181,7 @@ impl Post {
         Ok(())
     }
 
-    pub(crate) async fn from_id(id: u64, db: &sqlx::Pool<MySql>) -> Result<Self> {
+    pub(crate) async fn from_id(id: u64, user: &User, db: &sqlx::Pool<MySql>) -> Result<Self> {
         sqlx::query_as!(
             Self,
             "SELECT id,
@@ -194,8 +194,15 @@ capacity,
 place,
 (SELECT COUNT(*) FROM post_like as pl WHERE pl.post_id = p.id) as `total_likes!`,
 (SELECT COUNT(*) FROM post_comment as pc WHERE pc.post_id = p.id) as `total_comments!`,
-created_at FROM post as p WHERE id = ?",
-            id
+created_at FROM post as p WHERE
+id = ? AND town_id = ? AND
+author_id NOT IN (SELECT target_id FROM user_block WHERE user_id = ?) AND
+id NOT IN (SELECT post_id FROM post_block WHERE user_id = ?)
+",
+            id,
+            user.town_id(),
+            user.id(),
+            user.id()
         )
         .fetch_one(db)
         .await
@@ -224,9 +231,15 @@ place,
 (SELECT COUNT(*) FROM post_like as pl WHERE pl.post_id = p.id) as `total_likes!`,
 (SELECT COUNT(*) FROM post_comment as pc WHERE pc.post_id = p.id) as `total_comments!`,
 created_at
-FROM post as p WHERE id < ? AND town_id = ? AND author_id = ? ORDER BY id DESC LIMIT ?",
+FROM post as p WHERE
+id < ? AND town_id = ? AND author_id = ? AND
+author_id NOT IN (SELECT target_id FROM user_block WHERE user_id = ?) AND
+id NOT IN (SELECT post_id FROM post_block WHERE user_id = ?)
+ORDER BY id DESC LIMIT ?",
             last_id,
             user.town_id(),
+            user.id(),
+            user.id(),
             user.id(),
             limit
         )
@@ -235,7 +248,7 @@ FROM post as p WHERE id < ? AND town_id = ? AND author_id = ? ORDER BY id DESC L
     }
 
     pub(crate) async fn get(
-        town_id: TownId,
+        user: &User,
         last_id: PostId,
         limit: i32,
         db: &sqlx::Pool<MySql>,
@@ -253,9 +266,15 @@ place,
 (SELECT COUNT(*) FROM post_like as pl WHERE pl.post_id = p.id) as `total_likes!`,
 (SELECT COUNT(*) FROM post_comment as pc WHERE pc.post_id = p.id) as `total_comments!`,
 created_at
-FROM post as p WHERE id < ? AND town_id = ? ORDER BY id DESC LIMIT ?",
+FROM post as p WHERE
+id < ? AND town_id = ? AND
+author_id NOT IN (SELECT target_id FROM user_block WHERE user_id = ?) AND
+id NOT IN (SELECT post_id FROM post_block WHERE user_id = ?)
+ORDER BY id DESC LIMIT ?",
             last_id,
-            town_id,
+            user.town_id(),
+            user.id(),
+            user.id(),
             limit
         )
         .fetch_all(db)

@@ -50,6 +50,8 @@ pub enum Error {
     CommentNotFound(CommentId),
     #[error("invalid request")]
     InvalidRequest,
+    #[error("the content has blocked")]
+    BlockedContent,
     #[error("unhandled exception")]
     Unhandled(BoxDynError),
 }
@@ -74,6 +76,7 @@ impl Error {
             Error::PostNotFound(_) => StatusCode::NOT_FOUND,
             Error::CommentNotFound(_) => StatusCode::NOT_FOUND,
             Error::InvalidRequest => StatusCode::BAD_REQUEST,
+            Error::BlockedContent => StatusCode::FORBIDDEN,
             Error::Unhandled(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

@@ -4,7 +4,10 @@ use chrono::{DateTime, Utc};
 use serde::Serialize;
 use sqlx::MySql;
 
-use crate::{user::account::UserId, Error, Result};
+use crate::{
+    user::account::{User, UserId},
+    Error, Result,
+};
 
 use super::PostId;
 
@@ -32,6 +35,7 @@ pub(crate) struct CommentNode {
 impl Comment {
     pub(crate) async fn from_post_id(
         post_id: PostId,
+        user: &User,
         db: &sqlx::Pool<MySql>,
     ) -> Result<Vec<CommentNode>> {
         Ok(sqlx::query_as(
@@ -46,19 +50,24 @@ cc.parent_comment_id,
 cc.child_comment_id
 FROM post_comment as c
 INNER JOIN post_comment_closure as cc ON cc.child_comment_id = c.id
-WHERE cc.parent_comment_id IN
+WHERE
+c.author_id NOT IN (SELECT target_id FROM user_block WHERE user_id = ?) AND
+c.id NOT IN (SELECT comment_id FROM post_comment_block WHERE user_id = ?) AND
+cc.parent_comment_id IN
 (SELECT id FROM post_comment as c
 INNER JOIN post_comment_closure as cc ON cc.parent_comment_id = cc.child_comment_id WHERE c.post_id = ?)
 GROUP BY cc.parent_comment_id
 ORDER BY c.created_at DESC",
             )
+            .bind(user.id())
+            .bind(user.id())
             .bind(post_id)
             .fetch_all(db).await?)
     }
 
     pub(crate) async fn add(
         post_id: PostId,
-        author_id: UserId,
+        author: &User,
         content: &str,
         parent_comment_id: Option<CommentId>,
         db: &sqlx::Pool<MySql>,
@@ -68,7 +77,7 @@ ORDER BY c.created_at DESC",
         let id = sqlx::query!(
             "INSERT INTO post_comment (post_id, author_id, content) VALUES (?, ?, ?)",
             post_id,
-            author_id,
+            author.id(),
             content
         )
         .execute(db)
@@ -88,7 +97,7 @@ ORDER BY c.created_at DESC",
             .execute(db)
             .await?;
 
-        let comment = Self::from_id(id, db).await?;
+        let comment = Self::from_id(id, author, db).await?;
 
         tx.commit().await?;
 
@@ -113,18 +122,26 @@ ORDER BY c.created_at DESC",
         Ok(())
     }
 
-    pub(crate) async fn from_id(id: CommentId, db: &sqlx::Pool<MySql>) -> Result<Self> {
+    pub(crate) async fn from_id(
+        id: CommentId,
+        user: &User,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Self> {
         sqlx::query_as!(
             Self,
             "SELECT
+id,
+post_id,
+author_id as `author_id: _`,
+content,
+deleted as `deleted: _`,
+created_at
+FROM post_comment WHERE id = ? AND
+author_id NOT IN (SELECT target_id FROM user_block WHERE user_id = ?) AND
+id NOT IN (SELECT comment_id FROM post_comment_block WHERE user_id = ?)",
             id,
-            post_id,
-            author_id as `author_id: _`,
-            content,
-            deleted as `deleted: _`,
-            created_at
-            FROM post_comment WHERE id = ?",
-            id
+            user.id(),
+            user.id()
         )
         .fetch_optional(db)
         .await?

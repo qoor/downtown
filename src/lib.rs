@@ -69,6 +69,30 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
             "/user/me/like/post/:id",
             delete(handler::user::cancel_like_post).route_layer(auth_layer.clone()),
         )
+        .route(
+            "/user/me/block/user/:id",
+            post(handler::user::block_user).route_layer(auth_layer.clone()),
+        )
+        .route(
+            "/user/me/block/user/:id",
+            delete(handler::user::unblock_user).route_layer(auth_layer.clone()),
+        )
+        .route(
+            "/user/me/block/post/:id",
+            post(handler::user::block_post).route_layer(auth_layer.clone()),
+        )
+        .route(
+            "/user/me/block/post/:id",
+            delete(handler::user::unblock_post).route_layer(auth_layer.clone()),
+        )
+        .route(
+            "/user/me/block/post/:id/comment/:id",
+            post(handler::user::block_post_comment).route_layer(auth_layer.clone()),
+        )
+        .route(
+            "/user/me/block/post/:id/comment/:id",
+            delete(handler::user::unblock_post_comment).route_layer(auth_layer.clone()),
+        )
         .route("/user/me/post", get(handler::user::get_my_posts).route_layer(auth_layer.clone()))
         .route("/user/verification", patch(handler::user::refresh_verification))
         .route("/user/verification/phone", post(handler::user::setup_phone_verification))

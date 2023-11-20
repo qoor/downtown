@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT id,\nauthor_id,\npost_type,\ntown_id,\ncontent,\nage_range,\ncapacity,\nplace,\n(SELECT COUNT(*) FROM post_like as pl WHERE pl.post_id = p.id) as `total_likes!`,\n(SELECT COUNT(*) FROM post_comment as pc WHERE pc.post_id = p.id) as `total_comments!`,\ncreated_at\nFROM post as p WHERE id < ? AND town_id = ? ORDER BY id DESC LIMIT ?",
+  "query": "SELECT id,\nauthor_id,\npost_type,\ntown_id,\ncontent,\nage_range,\ncapacity,\nplace,\n(SELECT COUNT(*) FROM post_like as pl WHERE pl.post_id = p.id) as `total_likes!`,\n(SELECT COUNT(*) FROM post_comment as pc WHERE pc.post_id = p.id) as `total_comments!`,\ncreated_at FROM post as p WHERE\nid = ? AND town_id = ? AND\nauthor_id NOT IN (SELECT target_id FROM user_block WHERE user_id = ?) AND\nid NOT IN (SELECT post_id FROM post_block WHERE user_id = ?)\n",
   "describe": {
     "columns": [
       {
@@ -115,7 +115,7 @@
       }
     ],
     "parameters": {
-      "Right": 3
+      "Right": 4
     },
     "nullable": [
       false,
@@ -131,5 +131,5 @@
       false
     ]
   },
-  "hash": "232f41b1dca896b0391c478b3162f9d887c184d9a43e56a50e6b23a3150f3bf5"
+  "hash": "24b90255cd2475a95cb0704a39a20f5d96fd32265c1257b77ff4a0ab1c53cdc8"
 }

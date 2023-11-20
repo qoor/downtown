@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM post_comment_block WHERE user_id = ? AND comment_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "64440014f79c34c6109b25a7db0be53b68b4081917637ba62d5229c47f4ce6e4"
+}

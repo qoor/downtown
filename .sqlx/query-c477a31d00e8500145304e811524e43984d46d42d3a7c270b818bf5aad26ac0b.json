@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM post_block WHERE user_id = ? AND post_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c477a31d00e8500145304e811524e43984d46d42d3a7c270b818bf5aad26ac0b"
+}

@@ -5,7 +5,6 @@ use std::sync::Arc;
 use axum::{
     extract::{Path, Query, State},
     headers::{authorization::Bearer, Authorization},
-    http::StatusCode,
     response::IntoResponse,
     Extension, Json, TypedHeader,
 };
@@ -14,7 +13,10 @@ use chrono::{Datelike, Duration};
 use serde::Serialize;
 
 use crate::{
-    post::{Post, PostId},
+    post::{
+        comment::{Comment, CommentId},
+        Post, PostId,
+    },
     schema::{
         PhoneVerificationSchema, PhoneVerificationSetupSchema, PostGetResult, PostLikeResult,
         PostListSchema, ProfileBioUpdateSchema, ProfilePictureUpdateSchema, RegistrationSchema,
@@ -25,7 +27,7 @@ use crate::{
         authentication::PhoneAuthentication,
         jwt::{authorize_user, Token},
     },
-    AppState, Result,
+    AppState, Error, Result,
 };
 
 pub async fn create_user(
@@ -49,12 +51,14 @@ pub(crate) async fn get_other_user_info(
     Extension(user): Extension<User>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse> {
-    Ok(Json(
-        User::from_id(target_id, &state.database)
-            .await?
-            .to_other_user_schema(&user, &state.database)
-            .await?,
-    ))
+    let target = User::from_id(target_id, &state.database).await?;
+    let blocked = target.is_blocked(&user, &state.database).await?;
+
+    if blocked {
+        return Err(Error::BlockedContent);
+    }
+
+    Ok(Json(target.to_other_user_schema(&user, &state.database).await?))
 }
 
 pub(crate) async fn get_user_info(
@@ -178,7 +182,7 @@ pub(crate) async fn like_post(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    user.like_post(&Post::from_id(post_id, &state.database).await?, &state.database).await?;
+    user.like_post(&Post::from_id(post_id, &user, &state.database).await?, &state.database).await?;
 
     Ok(Json(PostLikeResult { user_id: user.id(), post_id }))
 }
@@ -188,7 +192,8 @@ pub(crate) async fn cancel_like_post(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    user.cancel_like_post(&Post::from_id(post_id, &state.database).await?, &state.database).await?;
+    user.cancel_like_post(&Post::from_id(post_id, &user, &state.database).await?, &state.database)
+        .await?;
 
     Ok(Json(PostLikeResult { user_id: user.id(), post_id }))
 }
@@ -216,6 +221,104 @@ pub(crate) async fn get_user_posts(
     println!("last_id = {}, limit = {}", params.last_id(), params.limit());
 
     Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
+}
+
+#[derive(Serialize)]
+struct UserBlockResult {
+    id: UserId,
+    target_id: UserId,
+}
+
+pub(crate) async fn block_user(
+    Path(target_id): Path<UserId>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    let target = User::from_id(target_id, &state.database).await?;
+
+    user.block_user(&target, &state.database).await?;
+
+    Ok(Json(UserBlockResult { id: user.id(), target_id: target.id() }))
+}
+
+pub(crate) async fn unblock_user(
+    Path(target_id): Path<UserId>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    let target = User::from_id(target_id, &state.database).await?;
+
+    user.unblock_user(&target, &state.database).await?;
+
+    Ok(Json(UserBlockResult { id: user.id(), target_id: target.id() }))
+}
+
+#[derive(Serialize)]
+struct PostBlockResult {
+    id: UserId,
+    post_id: UserId,
+}
+
+pub(crate) async fn block_post(
+    Path(post_id): Path<PostId>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    let post = Post::from_id(post_id, &user, &state.database).await?;
+
+    user.block_post(&post, &state.database).await?;
+
+    Ok(Json(PostBlockResult { id: user.id(), post_id: post.id() }))
+}
+
+pub(crate) async fn unblock_post(
+    Path(post_id): Path<PostId>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    let post = Post::from_id(post_id, &user, &state.database).await?;
+
+    user.unblock_post(&post, &state.database).await?;
+
+    Ok(Json(PostBlockResult { id: user.id(), post_id: post.id() }))
+}
+
+#[derive(Serialize)]
+struct CommentBlockResult {
+    id: UserId,
+    comment_id: UserId,
+}
+
+pub(crate) async fn block_post_comment(
+    Path((post_id, comment_id)): Path<(PostId, CommentId)>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    let comment = Comment::from_id(comment_id, &user, &state.database).await?;
+
+    if post_id != comment.post_id() {
+        return Err(Error::InvalidRequest);
+    }
+
+    user.block_post_comment(&comment, &state.database).await?;
+
+    Ok(Json(CommentBlockResult { id: user.id(), comment_id: comment.id() }))
+}
+
+pub(crate) async fn unblock_post_comment(
+    Path((post_id, comment_id)): Path<(PostId, CommentId)>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    let comment = Comment::from_id(comment_id, &user, &state.database).await?;
+
+    if post_id != comment.post_id() {
+        return Err(Error::InvalidRequest);
+    }
+
+    user.unblock_post_comment(&comment, &state.database).await?;
+
+    Ok(Json(CommentBlockResult { id: user.id(), comment_id: comment.id() }))
 }
 
 async fn create_jwt_token_pairs(user: &User, state: &Arc<AppState>) -> Result<TokenSchema> {

@@ -28,7 +28,7 @@ pub(crate) async fn create_post(
     Extension(user): Extension<User>,
     TypedMultipart(payload): TypedMultipart<PostCreationSchema>,
 ) -> Result<impl IntoResponse> {
-    let post = Post::create(user.town_id(), payload, &state.database, &state.s3).await?;
+    let post = Post::create(&user, payload, &state.database, &state.s3).await?;
 
     Ok(Json(PostResultSchema { post_id: post.id(), author_id: post.author_id() }))
 }
@@ -36,9 +36,9 @@ pub(crate) async fn create_post(
 pub(crate) async fn get_post(
     Path(post_id): Path<u64>,
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<User>,
+    Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    let post = Post::from_id(post_id, &state.database).await?;
+    let post = Post::from_id(post_id, &user, &state.database).await?;
 
     Ok(Json(PostGetResult::from_post(&post, &state.database).await?))
 }
@@ -49,7 +49,7 @@ pub(crate) async fn edit_post(
     Extension(user): Extension<User>,
     TypedMultipart(PostEditSchema { content, images }): TypedMultipart<PostEditSchema>,
 ) -> Result<impl IntoResponse> {
-    let post = Post::from_id(post_id, &state.database).await?;
+    let post = Post::from_id(post_id, &user, &state.database).await?;
 
     post.edit(user.id(), &content, images, &state.database, &state.s3).await?;
 
@@ -61,7 +61,7 @@ pub(crate) async fn delete_post(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    let post = Post::from_id(post_id, &state.database).await?;
+    let post = Post::from_id(post_id, &user, &state.database).await?;
 
     post.delete(user.id(), &state.database, &state.s3).await?;
 
@@ -76,9 +76,9 @@ pub(crate) async fn create_post_comment(
         CommentCreationSchema,
     >,
 ) -> Result<impl IntoResponse> {
-    Post::from_id(post_id, &state.database).await?;
+    Post::from_id(post_id, &user, &state.database).await?;
 
-    Comment::add(post_id, user.id(), &content, parent_comment_id, &state.database).await.map(
+    Comment::add(post_id, &user, &content, parent_comment_id, &state.database).await.map(
         |comment| {
             #[derive(Serialize)]
             struct CommentCreationResult {
@@ -95,9 +95,9 @@ pub(crate) async fn create_post_comment(
 pub(crate) async fn get_post_comments(
     Path(post_id): Path<u64>,
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<User>,
+    Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    Comment::from_post_id(post_id, &state.database).await.map(Json)
+    Comment::from_post_id(post_id, &user, &state.database).await.map(Json)
 }
 
 pub(crate) async fn delete_post_comment(
@@ -105,7 +105,7 @@ pub(crate) async fn delete_post_comment(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    let comment = Comment::from_id(comment_id, &state.database).await?;
+    let comment = Comment::from_id(comment_id, &user, &state.database).await?;
 
     if post_id != comment.post_id() {
         return Err(Error::InvalidRequest);
@@ -133,8 +133,7 @@ pub(crate) async fn get_post_list(
     State(state): State<Arc<AppState>>,
     user: Extension<User>,
 ) -> Result<impl IntoResponse> {
-    let posts =
-        Post::get(user.town_id(), params.last_id(), params.limit(), &state.database).await?;
+    let posts = Post::get(&user, params.last_id(), params.limit(), &state.database).await?;
 
     Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
 }
