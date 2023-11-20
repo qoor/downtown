@@ -42,9 +42,9 @@ impl Comment {
                 "SELECT
 c.id,
 c.post_id,
-c.author_id as `c.author_id: _`,
+c.author_id,
 c.content,
-c.deleted as `c.deleted: _`,
+c.deleted,
 c.created_at,
 cc.parent_comment_id,
 cc.child_comment_id
