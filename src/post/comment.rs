@@ -148,6 +148,27 @@ id NOT IN (SELECT comment_id FROM post_comment_block WHERE user_id = ?)",
         .ok_or(Error::CommentNotFound(id))
     }
 
+    pub(crate) async fn from_id_ignore_block(
+        id: CommentId,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Self> {
+        sqlx::query_as!(
+            Self,
+            "SELECT
+id,
+post_id,
+author_id as `author_id: _`,
+content,
+deleted as `deleted: _`,
+created_at
+FROM post_comment WHERE id = ?",
+            id,
+        )
+        .fetch_optional(db)
+        .await?
+        .ok_or(Error::CommentNotFound(id))
+    }
+
     pub(crate) fn id(&self) -> CommentId {
         self.id
     }

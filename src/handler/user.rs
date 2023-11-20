@@ -276,7 +276,7 @@ pub(crate) async fn unblock_post(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    let post = Post::from_id(post_id, &user, &state.database).await?;
+    let post = Post::from_id_ignore_block(post_id, &user, &state.database).await?;
 
     user.unblock_post(&post, &state.database).await?;
 
@@ -310,7 +310,7 @@ pub(crate) async fn unblock_post_comment(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    let comment = Comment::from_id(comment_id, &user, &state.database).await?;
+    let comment = Comment::from_id_ignore_block(comment_id, &state.database).await?;
 
     if post_id != comment.post_id() {
         return Err(Error::InvalidRequest);

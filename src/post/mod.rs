@@ -212,6 +212,36 @@ id NOT IN (SELECT post_id FROM post_block WHERE user_id = ?)
         })
     }
 
+    pub(crate) async fn from_id_ignore_block(
+        id: u64,
+        user: &User,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Self> {
+        sqlx::query_as!(
+            Self,
+            "SELECT id,
+author_id,
+post_type,
+town_id,
+content,
+age_range,
+capacity,
+place,
+(SELECT COUNT(*) FROM post_like as pl WHERE pl.post_id = p.id) as `total_likes!`,
+(SELECT COUNT(*) FROM post_comment as pc WHERE pc.post_id = p.id) as `total_comments!`,
+created_at FROM post as p WHERE
+id = ? AND town_id = ?",
+            id,
+            user.town_id(),
+        )
+        .fetch_one(db)
+        .await
+        .map_err(|err| match err {
+            sqlx::Error::RowNotFound => Error::PostNotFound(id),
+            _ => Error::Database(err),
+        })
+    }
+
     pub(crate) async fn from_user(
         user: &User,
         last_id: PostId,
