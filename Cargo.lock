@@ -966,6 +966,7 @@ dependencies = [
  "hyper 1.0.1",
  "jsonwebtoken",
  "oauth2",
+ "once_cell",
  "rand",
  "reqwest",
  "serde",
@@ -978,6 +979,7 @@ dependencies = [
  "tower",
  "tracing",
  "tracing-subscriber",
+ "url",
 ]
 
 [[package]]

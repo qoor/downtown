@@ -52,6 +52,18 @@ pub enum Error {
     InvalidRequest,
     #[error("the content has blocked")]
     BlockedContent,
+    #[error("an error occurred with internal connection")]
+    Reqwest {
+        #[from]
+        source: reqwest::Error,
+    },
+    #[error("an error occurred with url for internal connection")]
+    UrlParse {
+        #[from]
+        source: url::ParseError,
+    },
+    #[error("an error occurred while sending message ({0})")]
+    MessageSend(i32),
     #[error("unhandled exception")]
     Unhandled(BoxDynError),
 }
@@ -77,6 +89,9 @@ impl Error {
             Error::CommentNotFound(_) => StatusCode::NOT_FOUND,
             Error::InvalidRequest => StatusCode::BAD_REQUEST,
             Error::BlockedContent => StatusCode::FORBIDDEN,
+            Error::Reqwest { source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::UrlParse { source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::MessageSend(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Unhandled(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
