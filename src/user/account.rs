@@ -46,8 +46,8 @@ pub(crate) struct User {
     sex: Sex,
     town_id: TownId,
     verification_result: VerificationResult,
-    verification_type: IdVerificationType,
-    verification_photo_url: String,
+    verification_type: Option<IdVerificationType>,
+    verification_picture_url: Option<String>,
     picture: String,
     bio: Option<String>,
     refresh_token: Option<String>,
@@ -57,28 +57,17 @@ pub(crate) struct User {
 }
 
 impl User {
-    pub(crate) async fn register(
-        data: RegistrationSchema,
-        db: &sqlx::Pool<MySql>,
-        s3: &aws::S3Client,
-    ) -> Result<Self> {
+    pub(crate) async fn register(data: RegistrationSchema, db: &sqlx::Pool<MySql>) -> Result<Self> {
         let tx = db.begin().await?;
 
         let town_id = Town::from_address(&data.address, db).await.map(|town| town.id())?;
-        let verification_photo_url =
-            Self::upload_verification_photo(data.verification_photo, s3).await?;
-
         let user_id = sqlx::query!(
             "INSERT INTO user (
 name,
 phone,
 birthdate,
 sex,
-town_id,
-verification_type,
-verification_photo_url) VALUES (
-?,
-?,
+town_id) VALUES (
 ?,
 ?,
 ?,
@@ -90,8 +79,6 @@ verification_photo_url) VALUES (
             data.birthdate,
             data.sex,
             town_id,
-            data.verification_type,
-            verification_photo_url
         )
         .execute(db)
         .await
@@ -116,7 +103,7 @@ sex as `sex: Sex`,
 town_id,
 verification_result as `verification_result: _`,
 verification_type as `verification_type: _`,
-verification_photo_url,
+verification_picture_url,
 picture,
 bio,
 refresh_token,
@@ -146,7 +133,7 @@ sex as `sex: Sex`,
 town_id,
 verification_result as `verification_result: _`,
 verification_type as `verification_type: _`,
-verification_photo_url,
+verification_picture_url,
 picture,
 bio,
 refresh_token,
@@ -175,8 +162,8 @@ FROM user as u WHERE phone = ?",
             sex: self.sex.to_string(),
             town,
             verification_result: self.verification_result,
-            verification_type: self.verification_type.to_string(),
-            verification_photo_url: self.verification_photo_url.to_string(),
+            verification_type: self.verification_type.map(|value| value.to_string()),
+            verification_picture_url: self.verification_picture_url.clone(),
             picture: self.picture.clone(),
             bio: self.bio.clone().unwrap_or_default(),
             total_likes: self.total_likes,
@@ -399,6 +386,47 @@ FROM user as u WHERE phone = ?",
         Ok(())
     }
 
+    pub(crate) async fn update_verification(
+        &mut self,
+        verification_type: IdVerificationType,
+        picture: FieldData<NamedTempFile<File>>,
+        db: &sqlx::Pool<MySql>,
+        s3: &aws::S3Client,
+    ) -> Result<String> {
+        if self.is_verified() {
+            return Err(Error::InvalidRequest);
+        }
+
+        self.delete_verification_picture(s3).await?;
+
+        sqlx::query!(
+            "UPDATE user SET verification_result = ?, verification_picture_url = NULL WHERE id = ?",
+            VerificationResult::NotVerified,
+            self.id
+        )
+        .execute(db)
+        .await?;
+
+        self.verification_result = VerificationResult::NotVerified;
+        self.verification_picture_url = None;
+
+        let url = Self::upload_verification_picture(picture, s3).await?;
+
+        sqlx::query!(
+            "UPDATE user SET verification_type = ?, verification_picture_url = ? WHERE id = ?",
+            verification_type,
+            url,
+            self.id
+        )
+        .execute(db)
+        .await?;
+
+        self.verification_type = Some(verification_type);
+        self.verification_picture_url = Some(url.clone());
+
+        Ok(url)
+    }
+
     pub(crate) fn id(&self) -> UserId {
         self.id
     }
@@ -423,7 +451,7 @@ FROM user as u WHERE phone = ?",
         self.created_at
     }
 
-    async fn upload_verification_photo(
+    async fn upload_verification_picture(
         photo: FieldData<NamedTempFile<File>>,
         s3: &aws::S3Client,
     ) -> Result<String> {
@@ -441,6 +469,21 @@ FROM user as u WHERE phone = ?",
             .map_err(|err| Error::PersistFile { path: temp_path.clone(), source: err.into() })?;
 
         s3.push_file(&temp_path, &(String::from(VERIFICATION_PHOTO_PATH) + &basename)).await
+    }
+
+    async fn delete_verification_picture(&mut self, s3: &aws::S3Client) -> Result<()> {
+        let picture_url = self.verification_picture_url.clone();
+
+        match picture_url {
+            Some(picture_url) if !picture_url.is_empty() => {
+                s3.delete_file(&picture_url).await?;
+
+                self.verification_picture_url = None;
+
+                Ok(())
+            }
+            _ => Ok(()),
+        }
     }
 }
 

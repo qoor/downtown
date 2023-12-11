@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE user SET verification_result = ?, verification_picture_url = NULL WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "78edd90f8f3a38546dddda9119e0af12fe46490cdfce579d8234be08f469fab5"
+}

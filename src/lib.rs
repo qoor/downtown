@@ -94,9 +94,10 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
             delete(handler::user::unblock_post_comment).route_layer(auth_layer.clone()),
         )
         .route("/user/me/post", get(handler::user::get_my_posts).route_layer(auth_layer.clone()))
-        .route("/user/verification", patch(handler::user::refresh_verification))
-        .route("/user/verification/phone", post(handler::user::setup_phone_verification))
-        .route("/user/verification/phone", put(handler::user::verify_phone));
+        .route("/user/authentication", patch(handler::user::refresh_authorization))
+        .route("/user/authentication/phone", post(handler::user::setup_phone_authorization))
+        .route("/user/authentication/phone", put(handler::user::authorize_phone))
+        .route("/user/verification", patch(handler::user::update_verification));
     let post_routers = axum::Router::new()
         .route("/post", post(handler::post::create_post))
         .route("/post", get(handler::post::get_post_list))

@@ -23,12 +23,13 @@ use crate::{
     schema::{
         PhoneVerificationSchema, PhoneVerificationSetupSchema, PostGetResult, PostLikeResult,
         PostListSchema, ProfileBioUpdateSchema, ProfilePictureUpdateSchema, RegistrationSchema,
-        TokenSchema, UserLikeResult,
+        TokenSchema, UserLikeResult, UserVerification,
     },
     user::{
         account::{User, UserId},
         authentication::PhoneAuthentication,
         jwt::{authorize_user, Token},
+        IdVerificationType,
     },
     AppState, Error, Result,
 };
@@ -42,7 +43,7 @@ pub async fn create_user(
 
     PhoneAuthentication::authorize(&phone, &authorization_code, &state.database).await?;
 
-    let user = User::register(payload, &state.database, &state.s3).await?;
+    let user = User::register(payload, &state.database).await?;
 
     PhoneAuthentication::cancel(&phone, &state.database).await?;
 
@@ -71,7 +72,7 @@ pub(crate) async fn get_user_info(
     Ok(Json(user.to_schema(&state.database).await?))
 }
 
-pub(crate) async fn refresh_verification(
+pub(crate) async fn refresh_authorization(
     TypedHeader(Authorization(refresh_token)): TypedHeader<Authorization<Bearer>>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse> {
@@ -84,7 +85,7 @@ pub(crate) async fn refresh_verification(
     Ok(Json(create_jwt_token_pairs(&user, &state).await?))
 }
 
-pub async fn setup_phone_verification(
+pub async fn setup_phone_authorization(
     State(state): State<Arc<AppState>>,
     TypedMultipart(PhoneVerificationSetupSchema { phone }): TypedMultipart<
         PhoneVerificationSetupSchema,
@@ -110,7 +111,7 @@ pub async fn setup_phone_verification(
     }))
 }
 
-pub async fn verify_phone(
+pub async fn authorize_phone(
     State(state): State<Arc<AppState>>,
     TypedMultipart(PhoneVerificationSchema { phone, code }): TypedMultipart<
         PhoneVerificationSchema,
@@ -322,6 +323,31 @@ pub(crate) async fn unblock_post_comment(
     user.unblock_post_comment(&comment, &state.database).await?;
 
     Ok(Json(CommentBlockResult { id: user.id(), comment_id: comment.id() }))
+}
+
+pub(crate) async fn update_verification(
+    State(state): State<Arc<AppState>>,
+    Extension(mut user): Extension<User>,
+    TypedMultipart(UserVerification { verification_type, verification_picture }): TypedMultipart<
+        UserVerification,
+    >,
+) -> Result<impl IntoResponse> {
+    let picture_url = user
+        .update_verification(verification_type, verification_picture, &state.database, &state.s3)
+        .await?;
+
+    #[derive(Serialize)]
+    struct VerificationUpdateResult {
+        id: UserId,
+        verification_type: IdVerificationType,
+        verification_picture_url: String,
+    }
+
+    Ok(Json(VerificationUpdateResult {
+        id: user.id(),
+        verification_type,
+        verification_picture_url: picture_url,
+    }))
 }
 
 async fn create_jwt_token_pairs(user: &User, state: &Arc<AppState>) -> Result<TokenSchema> {

@@ -25,9 +25,6 @@ pub struct RegistrationSchema {
     pub sex: user::Sex,
     pub phone: String,
     pub address: String,
-    pub verification_type: IdVerificationType,
-    #[form_data(limit = "unlimited")]
-    pub verification_photo: FieldData<NamedTempFile>,
 }
 
 #[derive(TryFromMultipart)]
@@ -50,8 +47,10 @@ pub struct UserSchema {
     pub sex: String,
     pub town: Town,
     pub verification_result: VerificationResult,
-    pub verification_type: String,
-    pub verification_photo_url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verification_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verification_picture_url: Option<String>,
     pub picture: String,
     pub bio: String,
     pub total_likes: i64,
@@ -260,4 +259,11 @@ pub struct UserLikeResult {
 pub struct PostLikeResult {
     pub user_id: UserId,
     pub post_id: UserId,
+}
+
+#[derive(TryFromMultipart)]
+pub struct UserVerification {
+    pub verification_type: IdVerificationType,
+    #[form_data(limit = "unlimited")]
+    pub verification_picture: FieldData<NamedTempFile>,
 }

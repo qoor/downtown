@@ -7,6 +7,7 @@ pub(crate) mod jwt;
 use std::str::FromStr;
 
 use axum_typed_multipart::TryFromField;
+use serde::Serialize;
 
 #[derive(Debug, TryFromField, sqlx::Type, Clone, Copy)]
 #[repr(u32)]
@@ -41,9 +42,10 @@ impl std::fmt::Display for Sex {
     }
 }
 
-#[derive(Debug, TryFromField, sqlx::Type, Clone, Copy)]
+#[derive(Debug, TryFromField, sqlx::Type, Clone, Copy, Serialize)]
 #[repr(u32)]
 #[try_from_field(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum IdVerificationType {
     IdCard = 1,
     DriverLicense = 2,
