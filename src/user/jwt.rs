@@ -3,11 +3,14 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::State,
-    headers::{authorization::Bearer, Authorization},
-    http, middleware,
+    extract::{self, State},
+    middleware,
     response::IntoResponse,
-    RequestPartsExt, TypedHeader,
+    RequestPartsExt,
+};
+use axum_extra::{
+    headers::{authorization::Bearer, Authorization},
+    TypedHeader,
 };
 use chrono::{Duration, Utc};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey};
@@ -87,10 +90,10 @@ impl Token {
     }
 }
 
-pub(crate) async fn authorize_user_middleware<B>(
+pub(crate) async fn authorize_user_middleware(
     State(state): State<Arc<AppState>>,
-    req: http::Request<B>,
-    next: middleware::Next<B>,
+    req: extract::Request,
+    next: middleware::Next,
 ) -> Result<impl IntoResponse> {
     let (mut parts, body) = req.into_parts();
 
@@ -105,7 +108,7 @@ pub(crate) async fn authorize_user_middleware<B>(
         .await
         .map(|token| token.user_id)?;
 
-    let mut req = http::Request::from_parts(parts, body);
+    let mut req = extract::Request::from_parts(parts, body);
 
     // Include the account data to extensions
     req.extensions_mut().insert(User::from_id(user_id, &state.database).await?);

@@ -1,6 +1,5 @@
 // Copyright 2023. The downtown authors all rights reserved.
 
-use axum::Server;
 use dotenvy::dotenv;
 use downtown::{config::Config, env::get_env_or_panic};
 use sqlx::mysql::MySqlPoolOptions;
@@ -40,10 +39,12 @@ async fn main() {
 
     let config = Config::new();
     let address = config.address().to_string();
+    let listener = tokio::net::TcpListener::bind(&address).await.unwrap();
     let app = downtown::app(config, &pool).await;
 
     print_server_started(&address);
-    Server::bind(&address.parse().unwrap()).serve(app.into_make_service()).await.unwrap();
+
+    axum::serve(listener, app).await.unwrap();
 }
 
 fn print_server_started(address: &str) {
