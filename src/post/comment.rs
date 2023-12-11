@@ -57,7 +57,7 @@ cc.parent_comment_id IN
 (SELECT id FROM post_comment as c
 INNER JOIN post_comment_closure as cc ON cc.parent_comment_id = cc.child_comment_id WHERE c.post_id = ?)
 GROUP BY cc.parent_comment_id
-ORDER BY c.created_at DESC",
+ORDER BY c.created_at ASC",
             )
             .bind(user.id())
             .bind(user.id())
