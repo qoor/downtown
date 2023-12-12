@@ -53,6 +53,7 @@ pub(crate) struct User {
     refresh_token: Option<String>,
     total_likes: i64,
     created_at: DateTime<Utc>,
+    #[allow(dead_code)]
     updated_at: DateTime<Utc>,
 }
 

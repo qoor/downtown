@@ -75,8 +75,10 @@ pub(crate) struct Post {
 #[derive(sqlx::FromRow)]
 struct PostImage {
     id: u64,
+    #[allow(dead_code)]
     post_id: PostId,
     image_url: String,
+    #[allow(dead_code)]
     created_at: DateTime<Utc>,
 }
 

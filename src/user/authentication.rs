@@ -29,7 +29,9 @@ const ALIGO_TEST_MODE: bool = true;
 
 #[derive(Debug, sqlx::FromRow)]
 pub(crate) struct PhoneAuthentication {
+    #[allow(dead_code)]
     id: u64,
+    #[allow(dead_code)]
     phone: String,
     code: String,
     created_at: DateTime<Utc>,
