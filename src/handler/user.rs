@@ -91,8 +91,13 @@ pub async fn setup_phone_authorization(
         PhoneVerificationSetupSchema,
     >,
 ) -> Result<impl IntoResponse> {
-    let user = User::from_phone(&phone, &state.database).await?;
-    let bypass = user.created_at().year() == 1970 || phone == "20973917696";
+    let user =
+        User::from_phone(&phone, &state.database).await.map(Some).or_else(|err| match err {
+            Error::UserNotFound(_) => Ok(None),
+            _ => Err(err),
+        })?;
+    let bypass =
+        matches!(user, Some(user) if user.created_at().year() == 1970) || phone == "20973917696";
     let result = PhoneAuthentication::send(&phone, &state.database).await?;
 
     #[derive(Serialize)]
