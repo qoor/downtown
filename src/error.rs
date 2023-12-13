@@ -62,8 +62,8 @@ pub enum Error {
         #[from]
         source: url::ParseError,
     },
-    #[error("an error occurred while sending message ({0})")]
-    MessageSend(i32),
+    #[error("an error occurred while sending message ({message} ({code}))")]
+    MessageSend { code: i32, message: String },
     #[error("unhandled exception")]
     Unhandled(BoxDynError),
 }
@@ -91,7 +91,7 @@ impl Error {
             Error::BlockedContent => StatusCode::FORBIDDEN,
             Error::Reqwest { source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Error::UrlParse { source: _ } => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::MessageSend(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::MessageSend { code: _, message: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Unhandled(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -121,7 +121,9 @@ impl IntoResponse for Error {
                 error!("{} I/O error: {source}", path.to_string_lossy())
             }
             Error::Reqwest { ref source } => error!("failed to request http: {source:?}"),
-            Error::MessageSend(code) => error!("failed to send message: {code}"),
+            Error::MessageSend { code, ref message } => {
+                error!("failed to send message: {message} ({code})")
+            }
             Error::Unhandled(ref err) => error!("unhandled error: {err}"),
 
             _ => (),

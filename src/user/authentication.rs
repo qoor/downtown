@@ -104,7 +104,7 @@ impl PhoneAuthentication {
             .map_err(Error::from)
             .and_then(|result| match result.code {
                 0 => Ok(result),
-                _ => Err(Error::MessageSend(result.code)),
+                _ => Err(Error::MessageSend { code: result.code, message: result.message }),
             })
             .map(|result| result.token)?;
 
@@ -138,7 +138,7 @@ impl PhoneAuthentication {
             .map_err(Error::from)
             .and_then(|result| match result.code {
                 0 => Ok(result),
-                _ => Err(Error::MessageSend(result.code)),
+                _ => Err(Error::MessageSend { code: result.code, message: result.message }),
             })?;
 
         sqlx::query!("INSERT INTO phone_authorization (phone, code) VALUES (?, ?)", phone, code)
