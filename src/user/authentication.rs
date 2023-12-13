@@ -13,7 +13,7 @@ static ALIGO_HOST: sync::Lazy<Url> =
     sync::Lazy::new(|| Url::parse("https://kakaoapi.aligo.in").unwrap());
 
 const ALIGO_TOKEN_CREATE_PATH: &str = "akv10/token/create/";
-const ALIGO_SEND_PATH: &str = "akv10/token/create/";
+const ALIGO_SEND_PATH: &str = "akv10/alimtalk/send/";
 
 const ALIGO_TOKEN_LIFETIME_SEC: i32 = 30;
 
