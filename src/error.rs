@@ -121,6 +121,7 @@ impl IntoResponse for Error {
                 error!("{} I/O error: {source}", path.to_string_lossy())
             }
             Error::Reqwest { ref source } => error!("failed to request http: {source:?}"),
+            Error::MessageSend(code) => error!("failed to send message: {code}"),
             Error::Unhandled(ref err) => error!("unhandled error: {err}"),
 
             _ => (),

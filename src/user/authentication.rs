@@ -23,8 +23,8 @@ const ALIGO_SENDER_KEY: &str = "ed4c71c275d2cf3a12a238ee74ae9d025b878905";
 const ALIGO_TEMPLATE_CODE: &str = "TQ_0877";
 const ALIGO_SENDER_PHONE: &str = "01088074946";
 const ALIGO_MESSAGE_SUBJECT: &str = "이프 휴대폰 인증";
-const ALIGO_MESSAGE_PREFIX: &str = "이프 회원가입을 위해 인증번호 ['";
-const ALIGO_MESSAGE_SUFFIX: &str = "]를 입력해주세요.'";
+const ALIGO_MESSAGE_PREFIX: &str = "이프 회원가입을 위해 인증번호 [";
+const ALIGO_MESSAGE_SUFFIX: &str = "]를 입력해주세요.";
 const ALIGO_TEST_MODE: bool = true;
 
 #[derive(Debug, sqlx::FromRow)]
@@ -54,7 +54,7 @@ struct AligoSendResult {
     #[allow(dead_code)]
     message: String,
     #[allow(dead_code)]
-    info: AligoSendInfo,
+    info: Option<AligoSendInfo>,
 }
 
 #[derive(Deserialize)]
