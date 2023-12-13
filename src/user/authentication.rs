@@ -87,14 +87,14 @@ impl PhoneAuthentication {
 
         let mut token_url = ALIGO_HOST
             .join(ALIGO_TOKEN_CREATE_PATH)?
-            .join("s/")?
-            .join(&ALIGO_TOKEN_LIFETIME_SEC.to_string())?;
+            .join(&format!("{}/", ALIGO_TOKEN_LIFETIME_SEC))?
+            .join("s/")?;
         token_url
             .query_pairs_mut()
             .append_pair("apikey", ALIGO_API_KEY)
             .append_pair("userid", ALIGO_USER_ID)
             .finish();
-        println!("{}", token_url);
+
         let token: String = reqwest::Client::new()
             .post(token_url)
             .send()
@@ -109,7 +109,6 @@ impl PhoneAuthentication {
             .map(|result| result.token)?;
 
         let mut send_url = ALIGO_HOST.join(ALIGO_SEND_PATH)?;
-
         send_url
             .query_pairs_mut()
             .append_pair("apikey", ALIGO_API_KEY)
@@ -129,7 +128,6 @@ impl PhoneAuthentication {
             .append_pair("failover", "N")
             .append_pair("testMode", if ALIGO_TEST_MODE { "Y" } else { "N" })
             .finish();
-        println!("{}", send_url);
 
         reqwest::Client::new()
             .post(send_url)
