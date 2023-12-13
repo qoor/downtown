@@ -106,10 +106,7 @@ impl PhoneAuthentication {
                 0 => Ok(result),
                 _ => Err(Error::MessageSend { code: result.code, message: result.message }),
             })
-            .map(|result| {
-                println!("{}", result.urlencode);
-                result.token
-            })?;
+            .map(|result| result.token)?;
 
         let mut send_url = ALIGO_HOST.join(ALIGO_SEND_PATH)?;
         send_url
