@@ -94,6 +94,7 @@ impl PhoneAuthentication {
             .append_pair("apikey", ALIGO_API_KEY)
             .append_pair("userid", ALIGO_USER_ID)
             .finish();
+        println!("{}", token_url);
         let token: String = reqwest::Client::new()
             .post(token_url)
             .send()
@@ -128,6 +129,7 @@ impl PhoneAuthentication {
             .append_pair("failover", "N")
             .append_pair("testMode", if ALIGO_TEST_MODE { "Y" } else { "N" })
             .finish();
+        println!("{}", send_url);
 
         reqwest::Client::new()
             .post(send_url)
