@@ -85,13 +85,17 @@ impl PhoneAuthentication {
 
         let code = Self::generate_random_code();
 
+        let mut token_url = ALIGO_HOST
+            .join(ALIGO_TOKEN_CREATE_PATH)?
+            .join("s/")?
+            .join(&ALIGO_TOKEN_LIFETIME_SEC.to_string())?;
+        token_url
+            .query_pairs_mut()
+            .append_pair("apikey", ALIGO_API_KEY)
+            .append_pair("userid", ALIGO_USER_ID)
+            .finish();
         let token: String = reqwest::Client::new()
-            .post(
-                ALIGO_HOST
-                    .join(ALIGO_TOKEN_CREATE_PATH)?
-                    .join("s/")?
-                    .join(&ALIGO_TOKEN_LIFETIME_SEC.to_string())?,
-            )
+            .post(token_url)
             .send()
             .await?
             .json::<AligoTokenCreationResult>()
