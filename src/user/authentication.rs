@@ -129,8 +129,6 @@ impl PhoneAuthentication {
             .append_pair("testMode", if ALIGO_TEST_MODE { "Y" } else { "N" })
             .finish();
 
-        println!("{}", send_url);
-
         reqwest::Client::new()
             .post(send_url)
             .send()
