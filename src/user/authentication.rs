@@ -114,7 +114,7 @@ impl PhoneAuthentication {
             .append_pair("apikey", ALIGO_API_KEY)
             .append_pair("userid", ALIGO_USER_ID)
             .append_pair("token", &token)
-            .append_pair("sender_key", ALIGO_SENDER_KEY)
+            .append_pair("senderkey", ALIGO_SENDER_KEY)
             .append_pair("tpl_code", ALIGO_TEMPLATE_CODE)
             .append_pair("sender", ALIGO_SENDER_PHONE)
             // .append_pair("senddate", todo!())
