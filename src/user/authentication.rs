@@ -108,29 +108,23 @@ impl PhoneAuthentication {
             })
             .map(|result| result.token)?;
 
-        let mut send_url = ALIGO_HOST.join(ALIGO_SEND_PATH)?;
-        send_url
-            .query_pairs_mut()
-            .append_pair("apikey", ALIGO_API_KEY)
-            .append_pair("userid", ALIGO_USER_ID)
-            .append_pair("token", &token)
-            .append_pair("senderkey", ALIGO_SENDER_KEY)
-            .append_pair("tpl_code", ALIGO_TEMPLATE_CODE)
-            .append_pair("sender", ALIGO_SENDER_PHONE)
-            // .append_pair("senddate", todo!())
-            .append_pair("receiver_1", phone)
-            // .append_pair("recvname_1", todo!())
-            .append_pair("subject_1", ALIGO_MESSAGE_SUBJECT)
-            .append_pair(
-                "message_1",
-                &format!("{ALIGO_MESSAGE_PREFIX}{code}{ALIGO_MESSAGE_SUFFIX}"),
-            )
-            .append_pair("failover", "N")
-            .append_pair("testMode", if ALIGO_TEST_MODE { "Y" } else { "N" })
-            .finish();
+        let body = [
+            ("apikey", ALIGO_API_KEY),
+            ("userid", ALIGO_USER_ID),
+            ("token", &token),
+            ("senderkey", ALIGO_SENDER_KEY),
+            ("tpl_code", ALIGO_TEMPLATE_CODE),
+            ("sender", ALIGO_SENDER_PHONE),
+            ("receiver_1", phone),
+            ("subject_1", ALIGO_MESSAGE_SUBJECT),
+            ("message_1", &format!("{ALIGO_MESSAGE_PREFIX}{code}{ALIGO_MESSAGE_SUFFIX}")),
+            ("failover", "N"),
+            ("testmode", if ALIGO_TEST_MODE { "Y" } else { "N" }),
+        ];
 
         reqwest::Client::new()
-            .post(send_url)
+            .post(ALIGO_HOST.join(ALIGO_SEND_PATH)?)
+            .form(&body)
             .send()
             .await?
             .json::<AligoSendResult>()
