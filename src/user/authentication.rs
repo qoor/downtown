@@ -98,7 +98,7 @@ impl PhoneAuthentication {
             .await?
             .json::<AligoTokenCreationResult>()
             .await
-            .map_err(Error::from)
+            .map_err(Into::into)
             .and_then(|result| match result.code {
                 0 => Ok(result),
                 _ => Err(Error::MessageSend { code: result.code, message: result.message }),
