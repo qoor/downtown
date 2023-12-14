@@ -7,7 +7,10 @@ use sqlx::MySql;
 use tempfile::NamedTempFile;
 
 use crate::{
-    post::{comment::CommentId, GatheringAgeRange, Post, PostId, PostType},
+    post::{
+        comment::{Comment, CommentId, CommentNode},
+        GatheringAgeRange, Post, PostId, PostType,
+    },
     town::{Town, TownId},
     user::{
         self,
@@ -231,6 +234,75 @@ pub struct PostResultSchema {
 pub struct CommentCreationSchema {
     pub content: String,
     pub parent_comment_id: Option<CommentId>,
+}
+
+#[derive(Serialize)]
+pub struct CommentGetResult {
+    pub id: CommentId,
+    pub post_id: PostId,
+    pub author: Option<PostAuthor>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    pub deleted: bool,
+    pub created_at: DateTime<Utc>,
+}
+
+impl CommentGetResult {
+    pub(crate) async fn from_comment(comment: Comment, db: &sqlx::Pool<MySql>) -> Result<Self> {
+        let author = if let Some(author_id) = comment.author_id() {
+            Some(User::from_id(author_id, db).await?)
+        } else {
+            None
+        };
+
+        Ok(Self {
+            id: comment.id(),
+            post_id: comment.post_id(),
+            author: author.map(Into::into),
+            content: {
+                if !comment.is_deleted() {
+                    Some(comment.content().to_string())
+                } else {
+                    None
+                }
+            },
+            deleted: comment.is_deleted(),
+            created_at: comment.created_at(),
+        })
+    }
+
+    pub(crate) async fn from_comment_node(
+        comment_node: CommentNode,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<CommentResultNode> {
+        Ok(CommentResultNode {
+            comment: Self::from_comment(comment_node.comment().clone(), db).await?,
+            parent_comment_id: comment_node.parent_comment_id(),
+            child_comment_id: comment_node.child_comment_id(),
+        })
+    }
+
+    pub(crate) async fn from_comment_nodes(
+        comment_nodes: Vec<CommentNode>,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Vec<CommentResultNode>> {
+        let mut result_nodes: Vec<CommentResultNode> = vec![];
+        result_nodes.reserve(comment_nodes.len());
+
+        for node in comment_nodes.into_iter() {
+            result_nodes.push(Self::from_comment_node(node, db).await?);
+        }
+
+        Ok(result_nodes)
+    }
+}
+
+#[derive(Serialize)]
+pub(crate) struct CommentResultNode {
+    #[serde(flatten)]
+    comment: CommentGetResult,
+    parent_comment_id: CommentId,
+    child_comment_id: CommentId,
 }
 
 #[derive(Deserialize)]

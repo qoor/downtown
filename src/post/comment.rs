@@ -1,7 +1,6 @@
 // Copyright 2023. The downtown authors all rights reserved.
 
 use chrono::{DateTime, Utc};
-use serde::Serialize;
 use sqlx::MySql;
 
 use crate::{
@@ -13,7 +12,7 @@ use super::PostId;
 
 pub(crate) type CommentId = u64;
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, sqlx::FromRow, Clone)]
 pub(crate) struct Comment {
     id: CommentId,
     post_id: PostId,
@@ -23,13 +22,26 @@ pub(crate) struct Comment {
     created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, sqlx::FromRow)]
 pub(crate) struct CommentNode {
-    #[serde(flatten)]
     #[sqlx(flatten)]
     comment: Comment,
     parent_comment_id: CommentId,
     child_comment_id: CommentId,
+}
+
+impl CommentNode {
+    pub(crate) fn comment(&self) -> &Comment {
+        &self.comment
+    }
+
+    pub(crate) fn parent_comment_id(&self) -> CommentId {
+        self.parent_comment_id
+    }
+
+    pub(crate) fn child_comment_id(&self) -> CommentId {
+        self.child_comment_id
+    }
 }
 
 impl Comment {
@@ -179,5 +191,17 @@ FROM post_comment WHERE id = ?",
 
     pub(crate) fn author_id(&self) -> Option<UserId> {
         self.author_id
+    }
+
+    pub(crate) fn content(&self) -> &str {
+        &self.content
+    }
+
+    pub(crate) fn is_deleted(&self) -> bool {
+        self.deleted
+    }
+
+    pub(crate) fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
     }
 }
