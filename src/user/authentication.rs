@@ -63,17 +63,17 @@ struct AligoSendInfo {
     #[allow(dead_code)]
     send_type: String,
     #[allow(dead_code)]
-    mid: i64,
+    mid: Option<i64>,
     #[allow(dead_code)]
-    current: f64,
+    current: String,
     #[allow(dead_code)]
     unit: f64,
     #[allow(dead_code)]
     total: f64,
     #[allow(dead_code)]
-    scnt: i64,
+    scnt: Option<i64>,
     #[allow(dead_code)]
-    fcnt: i64,
+    fcnt: Option<i64>,
 }
 
 impl PhoneAuthentication {
@@ -85,18 +85,15 @@ impl PhoneAuthentication {
 
         let code = Self::generate_random_code();
 
-        let mut token_url = ALIGO_HOST
-            .join(ALIGO_TOKEN_CREATE_PATH)?
-            .join(&format!("{}/", ALIGO_TOKEN_LIFETIME_SEC))?
-            .join("s/")?;
-        token_url
-            .query_pairs_mut()
-            .append_pair("apikey", ALIGO_API_KEY)
-            .append_pair("userid", ALIGO_USER_ID)
-            .finish();
-
+        let body = [("apikey", ALIGO_API_KEY), ("userid", ALIGO_USER_ID)];
         let token: String = reqwest::Client::new()
-            .post(token_url)
+            .post(
+                ALIGO_HOST
+                    .join(ALIGO_TOKEN_CREATE_PATH)?
+                    .join(&format!("{}/", ALIGO_TOKEN_LIFETIME_SEC))?
+                    .join("s/")?,
+            )
+            .form(&body)
             .send()
             .await?
             .json::<AligoTokenCreationResult>()
@@ -119,9 +116,8 @@ impl PhoneAuthentication {
             ("subject_1", ALIGO_MESSAGE_SUBJECT),
             ("message_1", &format!("{ALIGO_MESSAGE_PREFIX}{code}{ALIGO_MESSAGE_SUFFIX}")),
             ("failover", "N"),
-            ("testmode", if ALIGO_TEST_MODE { "Y" } else { "N" }),
+            ("testMode", if ALIGO_TEST_MODE { "Y" } else { "N" }),
         ];
-
         reqwest::Client::new()
             .post(ALIGO_HOST.join(ALIGO_SEND_PATH)?)
             .form(&body)
