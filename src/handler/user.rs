@@ -214,22 +214,20 @@ pub(crate) async fn get_my_posts(
 ) -> Result<impl IntoResponse> {
     let posts = Post::from_user(&user, params.last_id(), params.limit(), &state.database).await?;
 
-    Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
+    Ok(Json(PostGetResult::from_posts(posts, &user, &state.database).await?))
 }
 
 pub(crate) async fn get_user_posts(
     Path(target_id): Path<UserId>,
     Query(params): Query<PostListSchema>,
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<User>,
+    Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
     let target_user = User::from_id(target_id, &state.database).await?;
     let posts =
         Post::from_user(&target_user, params.last_id(), params.limit(), &state.database).await?;
 
-    println!("last_id = {}, limit = {}", params.last_id(), params.limit());
-
-    Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
+    Ok(Json(PostGetResult::from_posts(posts, &user, &state.database).await?))
 }
 
 #[derive(Serialize)]

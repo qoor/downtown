@@ -16,8 +16,8 @@ use crate::{
         Post, PostId,
     },
     schema::{
-        CommentCreationSchema, PostCreationSchema, PostEditSchema, PostGetResult, PostListSchema,
-        PostResultSchema,
+        CommentCreationSchema, CommentGetResult, PostCreationSchema, PostEditSchema, PostGetResult,
+        PostListSchema, PostResultSchema,
     },
     user::account::{User, UserId},
     AppState, Error, Result,
@@ -40,7 +40,7 @@ pub(crate) async fn get_post(
 ) -> Result<impl IntoResponse> {
     let post = Post::from_id(post_id, &user, &state.database).await?;
 
-    Ok(Json(PostGetResult::from_post(&post, &state.database).await?))
+    Ok(Json(PostGetResult::from_post(&post, &user, &state.database).await?))
 }
 
 pub(crate) async fn edit_post(
@@ -97,7 +97,12 @@ pub(crate) async fn get_post_comments(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
-    Comment::from_post_id(post_id, &user, &state.database).await.map(Json)
+    CommentGetResult::from_comment_nodes(
+        Comment::from_post_id(post_id, &user, &state.database).await?,
+        &state.database,
+    )
+    .await
+    .map(Json)
 }
 
 pub(crate) async fn delete_post_comment(
@@ -131,9 +136,9 @@ pub(crate) async fn delete_post_comment(
 pub(crate) async fn get_post_list(
     Query(params): Query<PostListSchema>,
     State(state): State<Arc<AppState>>,
-    user: Extension<User>,
+    Extension(user): Extension<User>,
 ) -> Result<impl IntoResponse> {
     let posts = Post::get(&user, params.last_id(), params.limit(), &state.database).await?;
 
-    Ok(Json(PostGetResult::from_posts(posts, &state.database).await?))
+    Ok(Json(PostGetResult::from_posts(posts, &user, &state.database).await?))
 }

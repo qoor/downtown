@@ -141,8 +141,12 @@ pub struct PostGetResult {
 }
 
 impl PostGetResult {
-    pub(crate) async fn from_post(post: &Post, db: &sqlx::Pool<MySql>) -> Result<Self> {
-        let user = User::from_id(post.author_id(), db).await?;
+    pub(crate) async fn from_post(
+        post: &Post,
+        user: &User,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Self> {
+        let author = User::from_id(post.author_id(), db).await?;
         let age_range = match post.age_range() {
             Some(age_range) => GatheringAgeRange::from_id(age_range, db)
                 .await
@@ -150,33 +154,27 @@ impl PostGetResult {
                 .ok(),
             _ => None,
         };
-        let my_like = sqlx::query!(
-            "SELECT id FROM post_like WHERE user_id = ? AND post_id = ? LIMIT 1",
-            user.id(),
-            post.id()
-        )
-        .fetch_optional(db)
-        .await?
-        .is_some();
 
-        Ok(Self::new(post, user, post.images(db).await?, age_range, my_like))
+        Ok(Self::new(
+            post,
+            author,
+            post.images(db).await?,
+            age_range,
+            Self::my_like(user, post, db).await?,
+        ))
     }
 
-    pub(crate) async fn from_posts(posts: Vec<Post>, db: &sqlx::Pool<MySql>) -> Result<Vec<Self>> {
+    pub(crate) async fn from_posts(
+        posts: Vec<Post>,
+        user: &User,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Vec<Self>> {
         let age_ranges = GatheringAgeRange::get_all(db).await?;
         let mut results: Vec<Self> = vec![];
 
         results.reserve(posts.len());
         for post in posts.iter() {
-            let user = User::from_id(post.author_id(), db).await?;
-            let my_like = sqlx::query!(
-                "SELECT id FROM post_like WHERE user_id = ? AND post_id = ? LIMIT 1",
-                user.id(),
-                post.id()
-            )
-            .fetch_optional(db)
-            .await?
-            .is_some();
+            let author = User::from_id(post.author_id(), db).await?;
             let age_range = if let Some(post_age_range) = post.age_range() {
                 age_ranges
                     .iter()
@@ -186,7 +184,13 @@ impl PostGetResult {
                 None
             };
 
-            results.push(Self::new(post, user, post.images(db).await?, age_range, my_like));
+            results.push(Self::new(
+                post,
+                author,
+                post.images(db).await?,
+                age_range,
+                Self::my_like(user, post, db).await?,
+            ));
         }
 
         Ok(results)
@@ -214,6 +218,17 @@ impl PostGetResult {
             total_comments: post.total_comments(),
             created_at: post.created_at(),
         }
+    }
+
+    async fn my_like(user: &User, post: &Post, db: &sqlx::Pool<MySql>) -> Result<bool> {
+        Ok(sqlx::query!(
+            "SELECT id FROM post_like WHERE user_id = ? AND post_id = ? LIMIT 1",
+            user.id(),
+            post.id()
+        )
+        .fetch_optional(db)
+        .await?
+        .is_some())
     }
 }
 
