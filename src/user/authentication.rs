@@ -78,58 +78,64 @@ struct AligoSendInfo {
 
 impl PhoneAuthentication {
     // TODO: Send a verification code message to user
-    pub(crate) async fn send(phone: &str, db: &sqlx::Pool<MySql>) -> Result<Self> {
+    pub(crate) async fn send(
+        phone: &str,
+        message_send: bool,
+        db: &sqlx::Pool<MySql>,
+    ) -> Result<Self> {
         let tx = db.begin().await?;
 
         Self::cancel(phone, db).await?;
 
         let code = Self::generate_random_code();
 
-        let body = [("apikey", ALIGO_API_KEY), ("userid", ALIGO_USER_ID)];
-        let token: String = reqwest::Client::new()
-            .post(
-                ALIGO_HOST
-                    .join(ALIGO_TOKEN_CREATE_PATH)?
-                    .join(&format!("{}/", ALIGO_TOKEN_LIFETIME_SEC))?
-                    .join("s/")?,
-            )
-            .form(&body)
-            .send()
-            .await?
-            .json::<AligoTokenCreationResult>()
-            .await
-            .map_err(Into::into)
-            .and_then(|result| match result.code {
-                0 => Ok(result),
-                _ => Err(Error::MessageSend { code: result.code, message: result.message }),
-            })
-            .map(|result| result.token)?;
+        if message_send {
+            let body = [("apikey", ALIGO_API_KEY), ("userid", ALIGO_USER_ID)];
+            let token: String = reqwest::Client::new()
+                .post(
+                    ALIGO_HOST
+                        .join(ALIGO_TOKEN_CREATE_PATH)?
+                        .join(&format!("{}/", ALIGO_TOKEN_LIFETIME_SEC))?
+                        .join("s/")?,
+                )
+                .form(&body)
+                .send()
+                .await?
+                .json::<AligoTokenCreationResult>()
+                .await
+                .map_err(Into::into)
+                .and_then(|result| match result.code {
+                    0 => Ok(result),
+                    _ => Err(Error::MessageSend { code: result.code, message: result.message }),
+                })
+                .map(|result| result.token)?;
 
-        let body = [
-            ("apikey", ALIGO_API_KEY),
-            ("userid", ALIGO_USER_ID),
-            ("token", &token),
-            ("senderkey", ALIGO_SENDER_KEY),
-            ("tpl_code", ALIGO_TEMPLATE_CODE),
-            ("sender", ALIGO_SENDER_PHONE),
-            ("receiver_1", phone),
-            ("subject_1", ALIGO_MESSAGE_SUBJECT),
-            ("message_1", &format!("{ALIGO_MESSAGE_PREFIX}{code}{ALIGO_MESSAGE_SUFFIX}")),
-            ("failover", "N"),
-            ("testMode", if ALIGO_TEST_MODE { "Y" } else { "N" }),
-        ];
-        reqwest::Client::new()
-            .post(ALIGO_HOST.join(ALIGO_SEND_PATH)?)
-            .form(&body)
-            .send()
-            .await?
-            .json::<AligoSendResult>()
-            .await
-            .map_err(Error::from)
-            .and_then(|result| match result.code {
-                0 => Ok(result),
-                _ => Err(Error::MessageSend { code: result.code, message: result.message }),
-            })?;
+            let body = [
+                ("apikey", ALIGO_API_KEY),
+                ("userid", ALIGO_USER_ID),
+                ("token", &token),
+                ("senderkey", ALIGO_SENDER_KEY),
+                ("tpl_code", ALIGO_TEMPLATE_CODE),
+                ("sender", ALIGO_SENDER_PHONE),
+                ("receiver_1", phone),
+                ("subject_1", ALIGO_MESSAGE_SUBJECT),
+                ("message_1", &format!("{ALIGO_MESSAGE_PREFIX}{code}{ALIGO_MESSAGE_SUFFIX}")),
+                ("failover", "N"),
+                ("testMode", if ALIGO_TEST_MODE { "Y" } else { "N" }),
+            ];
+            reqwest::Client::new()
+                .post(ALIGO_HOST.join(ALIGO_SEND_PATH)?)
+                .form(&body)
+                .send()
+                .await?
+                .json::<AligoSendResult>()
+                .await
+                .map_err(Error::from)
+                .and_then(|result| match result.code {
+                    0 => Ok(result),
+                    _ => Err(Error::MessageSend { code: result.code, message: result.message }),
+                })?;
+        }
 
         sqlx::query!("INSERT INTO phone_authorization (phone, code) VALUES (?, ?)", phone, code)
             .execute(db)

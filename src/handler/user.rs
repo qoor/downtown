@@ -113,7 +113,7 @@ pub async fn setup_phone_authorization(
         })?;
     let bypass =
         matches!(user, Some(user) if user.created_at().year() == 1970) || phone == "20973917696";
-    let result = PhoneAuthentication::send(&phone, &state.database).await?;
+    let result = PhoneAuthentication::send(&phone, !bypass, &state.database).await?;
 
     #[derive(Serialize)]
     struct PhoneAuthenticationSetupResult {
