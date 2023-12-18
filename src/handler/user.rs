@@ -50,6 +50,21 @@ pub async fn create_user(
     Ok(Json(create_jwt_token_pairs(&user, &state).await?))
 }
 
+pub(crate) async fn delete_user(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> Result<impl IntoResponse> {
+    let id = user.id();
+
+    user.treat_as_deleted(&state.database).await?;
+
+    #[derive(Serialize)]
+    struct UserDeletionResult {
+        id: UserId,
+    }
+    Ok(Json(UserDeletionResult { id }))
+}
+
 pub(crate) async fn get_other_user_info(
     Path(target_id): Path<UserId>,
     Extension(user): Extension<User>,

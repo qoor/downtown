@@ -50,6 +50,7 @@ pub(crate) struct User {
     verification_picture_url: Option<String>,
     picture: String,
     bio: Option<String>,
+    deleted: bool,
     refresh_token: Option<String>,
     total_likes: i64,
     created_at: DateTime<Utc>,
@@ -107,6 +108,7 @@ verification_type as `verification_type: _`,
 verification_picture_url,
 picture,
 bio,
+deleted as `deleted: _`,
 refresh_token,
 (SELECT COUNT(*) FROM user_like as ul WHERE ul.target_id = u.id) as `total_likes!`,
 created_at,
@@ -119,6 +121,10 @@ FROM user as u WHERE u.id = ?",
         .map_err(|err| match err {
             sqlx::Error::RowNotFound => Error::UserNotFound(id.to_string()),
             _ => Error::Database(err),
+        })
+        .and_then(|user| match user.deleted {
+            false => Ok(user),
+            true => Err(Error::DeletedUser),
         })
     }
 
@@ -137,6 +143,7 @@ verification_type as `verification_type: _`,
 verification_picture_url,
 picture,
 bio,
+deleted as `deleted: _`,
 refresh_token,
 (SELECT COUNT(*) FROM user_like as ul WHERE ul.target_id = u.id) as `total_likes!`,
 created_at,
@@ -149,6 +156,10 @@ FROM user as u WHERE phone = ?",
         .map_err(|err| match err {
             sqlx::Error::RowNotFound => Error::UserNotFound(phone.to_string()),
             _ => Error::Database(err),
+        })
+        .and_then(|user| match user.deleted {
+            false => Ok(user),
+            true => Err(Error::DeletedUser),
         })
     }
 
@@ -176,6 +187,10 @@ FROM user as u WHERE phone = ?",
         requester: &User,
         db: &sqlx::Pool<MySql>,
     ) -> Result<OtherUserSchema> {
+        if self.deleted {
+            panic!("trying to return deleted user information")
+        }
+
         let town = Town::from_id(self.town_id, db).await?;
         let my_like = sqlx::query!(
             "SELECT id FROM user_like WHERE issuer_id = ? AND target_id = ? LIMIT 1",
@@ -426,6 +441,12 @@ FROM user as u WHERE phone = ?",
         self.verification_picture_url = Some(url.clone());
 
         Ok(url)
+    }
+
+    pub(crate) async fn treat_as_deleted(self, db: &sqlx::Pool<MySql>) -> Result<()> {
+        sqlx::query!("UPDATE user SET deleted = TRUE WHERE id = ?", self.id).execute(db).await?;
+
+        Ok(())
     }
 
     pub(crate) fn id(&self) -> UserId {

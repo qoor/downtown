@@ -43,6 +43,7 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
     let user_routers = axum::Router::new()
         .route("/user", post(handler::user::create_user))
         .route("/user/:id", get(handler::user::get_other_user_info).route_layer(auth_layer.clone()))
+        .route("/user/:id", delete(handler::user::delete_user).route_layer(auth_layer.clone()))
         .route("/user/:id/post", get(handler::user::get_user_posts).route_layer(auth_layer.clone()))
         .route("/user/me", get(handler::user::get_user_info).route_layer(auth_layer.clone()))
         .route(

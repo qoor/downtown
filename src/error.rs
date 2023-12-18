@@ -26,6 +26,8 @@ pub enum Error {
     VerificationExpired,
     #[error("user with phone number {0} not found")]
     UserNotFound(String),
+    #[error("user does not exist")]
+    DeletedUser,
     #[error("an error occurred with the JWT token")]
     Token(jsonwebtoken::errors::Error),
     #[error("invalid token")]
@@ -76,6 +78,7 @@ impl Error {
             Error::Verification => StatusCode::UNAUTHORIZED,
             Error::VerificationExpired => StatusCode::UNAUTHORIZED,
             Error::UserNotFound(_) => StatusCode::NOT_FOUND,
+            Error::DeletedUser => StatusCode::FORBIDDEN,
             Error::Token(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::InvalidToken => StatusCode::BAD_REQUEST,
             Error::TokenNotExists => StatusCode::NOT_FOUND,
