@@ -98,11 +98,7 @@ pub async fn app(config: Config, database: &sqlx::Pool<MySql>) -> axum::Router {
         .route("/user/authentication", patch(handler::user::refresh_authorization))
         .route("/user/authentication/phone", post(handler::user::setup_phone_authorization))
         .route("/user/authentication/phone", put(handler::user::authorize_phone))
-        // deprecated
-        .route("/user/verification", patch(handler::user::refresh_authorization))
-        .route("/user/verification/phone", post(handler::user::setup_phone_authorization))
-        .route("/user/verification/phone", put(handler::user::authorize_phone))
-        .route("/user/verification/v2", patch(handler::user::update_verification))
+        .route("/user/verification", patch(handler::user::update_verification))
         // .route("/user/verification", patch(handler::user::update_verification))
         ;
     let post_routers = axum::Router::new()
